@@ -1,64 +1,83 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.utils import executor
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-import os
-
-TOKEN = os.getenv("TOKEN")
-
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+import random
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, ContextTypes
 
 players = []
+max_players = 10
+game_started = False
 
-@dp.message_handler(commands=['start'])
-async def start(message: types.Message):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global players, game_started
 
-    buttons = InlineKeyboardMarkup(row_width=1)
-    
-    join = InlineKeyboardButton(
-        "🎮 مشاركة",
-        callback_data="join"
+    players = []
+    game_started = False
+
+    if context.args:
+        try:
+            num = int(context.args[0])
+            if 10 <= num <= 50:
+                global max_players
+                max_players = num
+        except:
+            pass
+
+    keyboard = [
+        [InlineKeyboardButton("🎡 دخول", callback_data="join")],
+        [InlineKeyboardButton("▶️ بدء", callback_data="spin")]
+    ]
+
+    await update.message.reply_text(
+        f"🎯 عجلة الحذف بدأت!\n\nالعدد المطلوب: {max_players}\n\nاضغط دخول للمشاركة.",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-    spin = InlineKeyboardButton(
-        "🎡 تدوير العجلة",
-        callback_data="spin"
-    )
+async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    global players, game_started
 
-    buttons.add(join, spin)
+    query = update.callback_query
+    await query.answer()
 
-    await message.answer(
-        "🎰 اهلاً بك في روليت التليگرام\n\nاضغط مشاركة للدخول.",
-        reply_markup=buttons
-    )
+    user = query.from_user
 
-@dp.callback_query_handler(lambda c: c.data == "join")
-async def join_game(callback: types.CallbackQuery):
+    if query.data == "join":
+        if game_started:
+            return
 
-    user = callback.from_user.first_name
+        if user.first_name not in players:
+            players.append(user.first_name)
 
-    if user not in players:
-        players.append(user)
+        await query.message.reply_text(
+            f"✅ {user.first_name} دخل اللعبة\n👥 العدد الحالي: {len(players)}/{max_players}"
+        )
 
-    await callback.answer("تمت المشاركة ✅", show_alert=True)
+    elif query.data == "spin":
+        if game_started:
+            return
 
-@dp.callback_query_handler(lambda c: c.data == "spin")
-async def spin(callback: types.CallbackQuery):
+        if len(players) < 2:
+            await query.message.reply_text("❌ لازم لاعبين اكثر.")
+            return
 
-    if len(players) < 2:
-        await callback.answer("لا يوجد مشاركين كافيين", show_alert=True)
-        return
+        game_started = True
 
-    loser = players.pop(0)
+        current = players.copy()
 
-    text = f"❌ الخاسر: {loser}\n\n👥 المتبقين: {len(players)}"
+        while len(current) > 1:
+            loser = random.choice(current)
+            current.remove(loser)
 
-    if len(players) == 1:
-        text += f"\n\n🏆 الفائز: {players[0]}"
+            await query.message.reply_text(
+                f"🎡 العجلة دارت...\n\n❌ خرج: {loser}\n👥 الباقين: {len(current)}"
+            )
 
-    await callback.message.answer(text)
+        await query.message.reply_text(
+            f"🏆 الفائز النهائي: {current[0]}"
+        )
 
-    await callback.answer()
+app = ApplicationBuilder().token("8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE").build()
 
-if __name__ == "__main__":
-    executor.start_polling(dp)
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CallbackQueryHandler(button))
+
+print("Bot Running...")
+app.run_polling()
