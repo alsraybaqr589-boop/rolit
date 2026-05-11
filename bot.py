@@ -6,7 +6,7 @@ from telegram import (
     InputTextMessageContent,
 )
 from telegram.ext import (
-    ApplicationBuilder,
+    Application,
     CommandHandler,
     CallbackQueryHandler,
     InlineQueryHandler,
@@ -15,71 +15,87 @@ from telegram.ext import (
 from uuid import uuid4
 import random
 
+TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
+
 games = {}
 
-# لما الشخص يكتب /start
+# /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("🎯 البوت شغال!")
+    await update.message.reply_text("🎯 البوت شغال")
 
-# إنشاء منشور الروليت بالقنوات
+# inline mode
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    game_id = str(uuid4())
-
-    games[game_id] = {
-        "players": [],
-        "max_players": 10
-    }
-
-    keyboard = [
-        [InlineKeyboardButton("🎮 مشاركة (0)", callback_data=f"join_{game_id}")],
-        [InlineKeyboardButton("🎡 تدوير العجلة", callback_data=f"spin_{game_id}")]
-    ]
 
     results = [
         InlineQueryResultArticle(
             id=str(uuid4()),
             title="🎯 إنشاء روليت",
+            description="اضغط لإنشاء روليت بالقناة",
             input_message_content=InputTextMessageContent(
-                f"🎯 روليت عادي\n\n👥 المشاركين: 0 من أصل 10\n🏆 لم يتم اختيار الفائز بعد"
+                "🎯 روليت جديد\n\n👥 المشاركين: 0"
             ),
-            reply_markup=InlineKeyboardMarkup(keyboard),
-            description="اضغط لإنشاء لعبة روليت"
+            reply_markup=InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "✅ دخول",
+                        callback_data="join"
+                    )
+                ],
+                [
+                    InlineKeyboardButton(
+                        "🎡 تدوير",
+                        callback_data="spin"
+                    )
+                ]
+            ])
         )
     ]
 
     await update.inline_query.answer(results, cache_time=0)
 
-# دخول لاعب
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+players = []
+
+# الأزرار
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     query = update.callback_query
     await query.answer()
 
-    data = query.data
+    global players
 
-    if data.startswith("join_"):
-        game_id = data.split("_")[1]
+    if query.data == "join":
 
         user = query.from_user.first_name
 
-        if user not in games[game_id]["players"]:
-            games[game_id]["players"].append(user)
+        if user not in players:
+            players.append(user)
 
-        count = len(games[game_id]["players"])
+        text = f"🎯 روليت جديد\n\n👥 المشاركين: {len(players)}\n\n"
+
+        for p in players:
+            text += f"• {p}\n"
 
         keyboard = [
-            [InlineKeyboardButton(f"🎮 مشاركة ({count})", callback_data=f"join_{game_id}")],
-            [InlineKeyboardButton("🎡 تدوير العجلة", callback_data=f"spin_{game_id}")]
+            [
+                InlineKeyboardButton(
+                    f"✅ دخول ({len(players)})",
+                    callback_data="join"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    "🎡 تدوير",
+                    callback_data="spin"
+                )
+            ]
         ]
 
         await query.edit_message_text(
-            f"🎯 روليت عادي\n\n👥 المشاركين: {count} من أصل 10\n🏆 لم يتم اختيار الفائز بعد",
+            text,
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-    elif data.startswith("spin_"):
-        game_id = data.split("_")[1]
-
-        players = games[game_id]["players"]
+    elif query.data == "spin":
 
         if len(players) < 2:
             await query.answer("❌ لازم لاعبين أكثر", show_alert=True)
@@ -87,20 +103,17 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         winner = random.choice(players)
 
-        keyboard = [
-            [InlineKeyboardButton(f"🎮 مشاركة ({len(players)})", callback_data=f"join_{game_id}")]
-        ]
-
         await query.edit_message_text(
-            f"🏆 الفائز هو: {winner}",
-            reply_markup=InlineKeyboardMarkup(keyboard)
+            f"🏆 الفائز هو:\n\n{winner}"
         )
 
-app = ApplicationBuilder().token("8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE").build()
+        players = []
+
+app = Application.builder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
 app.add_handler(InlineQueryHandler(inline_query))
-app.add_handler(CallbackQueryHandler(button))
+app.add_handler(CallbackQueryHandler(buttons))
 
-print("Bot is running...")
+print("Running...")
 app.run_polling()
