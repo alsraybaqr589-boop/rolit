@@ -61,7 +61,7 @@ menu = InlineKeyboardMarkup(
         [
             InlineKeyboardButton(
                 text="📢 قناتنا",
-                url="https://t.me/https:/NQJNQ"
+                url=url="https://t.me/NQJNQ"
             )
         ]
     ]
