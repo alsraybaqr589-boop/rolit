@@ -12,25 +12,15 @@ from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
 TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
-CHANNEL = "https://t.me/NQJNQ"
 
 bot = Bot(
     token=TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+    default=DefaultBotProperties(
+        parse_mode=ParseMode.HTML
+    )
 )
 
 dp = Dispatcher()
-
-
-# التحقق من الاشتراك
-async def check_sub(user_id):
-
-    try:
-        member = await bot.get_chat_member(CHANNEL, user_id)
-        return member.status in ["member", "administrator", "creator"]
-
-    except:
-        return False
 
 
 # القائمة الرئيسية
@@ -61,7 +51,7 @@ menu = InlineKeyboardMarkup(
         [
             InlineKeyboardButton(
                 text="📢 قناتنا",
-                url=url="https://t.me/NQJNQ"
+                url="https://t.me/NQJNQ"
             )
         ]
     ]
@@ -100,39 +90,15 @@ vip_menu = InlineKeyboardMarkup(
 @dp.message(CommandStart())
 async def start(message: Message):
 
-    sub = await check_sub(message.from_user.id)
-
-    if not sub:
-
-        join = InlineKeyboardMarkup(
-            inline_keyboard=[
-                [
-                    InlineKeyboardButton(
-                        text="اضغط هنا للاشتراك",
-                        url=f"https://t.me/{CHANNEL.replace('@','')}"
-                    )
-                ]
-            ]
-        )
-
-        await message.answer(
-            "عذراً عزيزي، يجب عليك الاشتراك في قناة البوت لتتمكن من استخدامه.",
-            reply_markup=join
-        )
-
-        return
-
     text = """
 🎮 أهلاً بك في بوت الروليت
 
 ✨ المميزات:
-• مشاركة بالقنوات
-• اختيار عدد اللاعبين
-• سحب تلقائي
-• سحب يدوي
-• اشتراك إجباري
+• روليت عادي
 • روليت أحكام
 • روليت VIP
+• نشر بالقنوات
+• سحب تلقائي
 """
 
     await message.answer(
@@ -191,7 +157,7 @@ async def create_vip(callback: CallbackQuery):
 async def channels(callback: CallbackQuery):
 
     await callback.message.edit_text(
-        "إدارة القنوات الخاصة بك:\n\n- لا توجد قنوات مضافة حالياً.",
+        "⚙️ إدارة القنوات\n\nلا توجد قنوات مضافة حالياً.",
         reply_markup=InlineKeyboardMarkup(
             inline_keyboard=[
 
@@ -221,13 +187,11 @@ async def back(callback: CallbackQuery):
 🎮 أهلاً بك في بوت الروليت
 
 ✨ المميزات:
-• مشاركة بالقنوات
-• اختيار عدد اللاعبين
-• سحب تلقائي
-• سحب يدوي
-• اشتراك إجباري
+• روليت عادي
 • روليت أحكام
 • روليت VIP
+• نشر بالقنوات
+• سحب تلقائي
 """
 
     await callback.message.edit_text(
@@ -238,6 +202,8 @@ async def back(callback: CallbackQuery):
 
 # تشغيل البوت
 async def main():
+
+    print("BOT STARTED")
 
     await dp.start_polling(bot)
 
