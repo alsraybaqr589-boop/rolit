@@ -199,10 +199,10 @@ def back(call):
 
 # ---------------- تشغيل ---------------- #
 
-print("BOT IS RUNNING...")
+printprint("BOT IS RUNNING...")
 
 while True:
     try:
-        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+        bot.infinity_polling(skip_pending=True)
     except Exception as e:
         print(e)
