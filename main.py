@@ -199,7 +199,7 @@ def back(call):
 
 # ---------------- تشغيل ---------------- #
 
-printprint("BOT IS RUNNING...")
+print("BOT IS RUNNING...")
 
 while True:
     try:
