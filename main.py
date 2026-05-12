@@ -39,12 +39,14 @@ def start(message):
     markup.add(vip)
     markup.add(channel)
 
-    photo = open("IMG-20260510-224033-603.jpg", "rb")
+PHOTO = "https://i.imgur.com/2uQZQ0K.jpeg"
 
-    bot.send_photo(
-        message.chat.id,
-        photo,
-        caption="""
+bot.send_photo(
+    message.chat.id,
+    PHOTO,
+    caption=text,
+    reply_markup=markup
+)
 🎮 أهلاً بك في بوت الروليت
 
 ✨ الأقسام:
