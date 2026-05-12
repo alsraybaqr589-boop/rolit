@@ -1,7 +1,7 @@
 import telebot
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
+TOKEN = "NQJNQ"
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -14,44 +14,44 @@ def start(message):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    btn1 = InlineKeyboardButton(
+    normal = InlineKeyboardButton(
         "🌐 روليت عادي",
         callback_data="normal"
     )
 
-    btn2 = InlineKeyboardButton(
-        "📦 روليت أحكام",
-        callback_data="rules"
+    ahkam = InlineKeyboardButton(
+        "🪵 روليت أحكام",
+        callback_data="ahkam"
     )
 
-    btn3 = InlineKeyboardButton(
+    vip = InlineKeyboardButton(
         "🌈 روليت مميز",
         callback_data="vip"
     )
 
-    btn4 = InlineKeyboardButton(
+    channel = InlineKeyboardButton(
         "📢 القناة",
         url="https://t.me/NQJNQ"
     )
 
-    markup.add(btn1)
-    markup.add(btn2)
-    markup.add(btn3)
-    markup.add(btn4)
+    markup.add(normal)
+    markup.add(ahkam)
+    markup.add(vip)
+    markup.add(channel)
 
-    text = """
+    photo = open("IMG-20260510-224033-603.jpg", "rb")
+
+    bot.send_photo(
+        message.chat.id,
+        photo,
+        caption="""
 🎮 أهلاً بك في بوت الروليت
 
 ✨ الأقسام:
 • روليت عادي
 • روليت أحكام
 • روليت مميز
-"""
-
-    bot.send_photo(
-        message.chat.id,
-        photo="https://i.imgur.com/9XlQKxR.jpeg",
-        caption=text,
+""",
         reply_markup=markup
     )
 
@@ -65,7 +65,7 @@ def normal(call):
     start_btn = InlineKeyboardButton(
         "🎭 ابدأ الآن",
         switch_inline_query_chosen_chat={
-            "query": "🎭 روليت عادي",
+            "query": "روليت عادي 🎭",
             "allow_user_chats": True,
             "allow_group_chats": True,
             "allow_channel_chats": True
@@ -73,7 +73,7 @@ def normal(call):
     )
 
     back_btn = InlineKeyboardButton(
-        "🏠 خروج",
+        "🏠 رجوع",
         callback_data="back"
     )
 
@@ -88,15 +88,15 @@ def normal(call):
 
 # ---------------- روليت أحكام ---------------- #
 
-@bot.callback_query_handler(func=lambda call: call.data == "rules")
-def rules(call):
+@bot.callback_query_handler(func=lambda call: call.data == "ahkam")
+def ahkam(call):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
     start_btn = InlineKeyboardButton(
-        "📦 ابدأ الآن",
+        "🪵 ابدأ الآن",
         switch_inline_query_chosen_chat={
-            "query": "📦 روليت أحكام",
+            "query": "روليت أحكام 🪵",
             "allow_user_chats": True,
             "allow_group_chats": True,
             "allow_channel_chats": True
@@ -104,7 +104,7 @@ def rules(call):
     )
 
     back_btn = InlineKeyboardButton(
-        "🏠 خروج",
+        "🏠 رجوع",
         callback_data="back"
     )
 
@@ -113,7 +113,7 @@ def rules(call):
 
     bot.send_message(
         call.message.chat.id,
-        "📦 تم اختيار روليت الأحكام",
+        "🪵 تم اختيار روليت الأحكام",
         reply_markup=markup
     )
 
@@ -136,7 +136,7 @@ def get_title(message):
 
     msg = bot.send_message(
         message.chat.id,
-        "👥 ارسل عدد المشاركين:"
+        "👥 ارسل عدد الأعضاء:"
     )
 
     bot.register_next_step_handler(msg, get_members)
@@ -158,7 +158,7 @@ def get_winners(message):
 
     msg = bot.send_message(
         message.chat.id,
-        "📢 ارسل رابط او يوزر القناة:"
+        "📢 ارسل رابط القناة:"
     )
 
     bot.register_next_step_handler(msg, finish_vip)
@@ -170,23 +170,18 @@ def finish_vip(message):
     markup = InlineKeyboardMarkup(row_width=1)
 
     share_btn = InlineKeyboardButton(
-        "📢 مشاركة الروليت",
+        "📢 مشاركة",
         switch_inline_query_chosen_chat={
-            "query": f'''🌈 روليت مميز
+            "query": f"""🌈 روليت مميز
 
-📝 العنوان:
-{data["title"]}
+📝 {data['title']}
 
-👥 المشاركين:
-{data["members"]}
+👥 {data['members']}
 
-🏆 الفائزين:
-{data["winners"]}
+🏆 {data['winners']}
 
-📢 القناة:
-{message.text}
-''',
-
+📢 {message.text}
+""",
             "allow_user_chats": True,
             "allow_group_chats": True,
             "allow_channel_chats": True
@@ -194,7 +189,7 @@ def finish_vip(message):
     )
 
     back_btn = InlineKeyboardButton(
-        "🏠 خروج",
+        "🏠 رجوع",
         callback_data="back"
     )
 
