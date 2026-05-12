@@ -1,4 +1,7 @@
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    InlineKeyboardMarkup,
+    InlineKeyboardButton
+)
 
 # القائمة الرئيسية
 main_menu = InlineKeyboardMarkup(
@@ -8,10 +11,8 @@ main_menu = InlineKeyboardMarkup(
             InlineKeyboardButton(
                 text="🌐 روليت عادي",
                 callback_data="normal"
-            )
-        ],
+            ),
 
-        [
             InlineKeyboardButton(
                 text="📜 روليت أحكام",
                 callback_data="rules"
@@ -31,48 +32,18 @@ main_menu = InlineKeyboardMarkup(
                 url="https://t.me/NQJNQ"
             )
         ]
-
     ]
 )
 
-# قائمة الروليت المميز
-vip_menu = InlineKeyboardMarkup(
+# زر الرجوع
+back_menu = InlineKeyboardMarkup(
     inline_keyboard=[
 
         [
             InlineKeyboardButton(
-                text="🌈 بدء إنشاء روليت",
-                callback_data="create_vip"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="⚙️ إعدادات القنوات",
-                callback_data="channels"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="🏠 العودة للقائمة",
+                text="🏠 رجوع",
                 callback_data="back"
             )
         ]
-
-    ]
-)
-
-# زر الإلغاء
-cancel_button = InlineKeyboardMarkup(
-    inline_keyboard=[
-
-        [
-            InlineKeyboardButton(
-                text="❌ إلغاء",
-                callback_data="cancel"
-            )
-        ]
-
     ]
 )
