@@ -212,4 +212,8 @@ def back(call):
 
 print("BOT IS RUNNING...")
 
-bot.infinity_polling(skip_pending=True)
+while True:
+    try:
+        bot.infinity_polling(skip_pending=True)
+    except Exception as e:
+        print(e)
