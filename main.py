@@ -1,14 +1,11 @@
 import telebot
-from telebot.types import *
-import random
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
 
 bot = telebot.TeleBot(TOKEN)
 
 vip_data = {}
-
-PHOTO = "https://i.imgur.com/2uQZQ0K.jpeg"
 
 # ---------------- START ---------------- #
 
@@ -22,9 +19,9 @@ def start(message):
         callback_data="normal"
     )
 
-    rules = InlineKeyboardButton(
+    ahkam = InlineKeyboardButton(
         "🪵 روليت أحكام",
-        callback_data="rules"
+        callback_data="ahkam"
     )
 
     vip = InlineKeyboardButton(
@@ -37,11 +34,16 @@ def start(message):
         url="https://t.me/NQJNQ"
     )
 
-    markup.add(normal, rules, vip, channel)
+    markup.add(normal)
+    markup.add(ahkam)
+    markup.add(vip)
+    markup.add(channel)
+
+    photo = open("IMG-20260510-224033-603.jpg", "rb")
 
     bot.send_photo(
         message.chat.id,
-        PHOTO,
+        photo,
         caption="""
 🎮 أهلاً بك في بوت الروليت
 
@@ -60,8 +62,8 @@ def normal(call):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    share = InlineKeyboardButton(
-        "📢 مشاركة",
+    start_btn = InlineKeyboardButton(
+        "🎭 ابدأ الآن",
         switch_inline_query_chosen_chat={
             "query": "روليت عادي 🎭",
             "allow_user_chats": True,
@@ -70,12 +72,13 @@ def normal(call):
         }
     )
 
-    back = InlineKeyboardButton(
-        "🏠 خروج",
+    back_btn = InlineKeyboardButton(
+        "🏠 رجوع",
         callback_data="back"
     )
 
-    markup.add(share, back)
+    markup.add(start_btn)
+    markup.add(back_btn)
 
     bot.send_message(
         call.message.chat.id,
@@ -85,13 +88,13 @@ def normal(call):
 
 # ---------------- روليت أحكام ---------------- #
 
-@bot.callback_query_handler(func=lambda call: call.data == "rules")
-def rules(call):
+@bot.callback_query_handler(func=lambda call: call.data == "ahkam")
+def ahkam(call):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    share = InlineKeyboardButton(
-        "📢 مشاركة",
+    start_btn = InlineKeyboardButton(
+        "🪵 ابدأ الآن",
         switch_inline_query_chosen_chat={
             "query": "روليت أحكام 🪵",
             "allow_user_chats": True,
@@ -100,12 +103,13 @@ def rules(call):
         }
     )
 
-    back = InlineKeyboardButton(
-        "🏠 خروج",
+    back_btn = InlineKeyboardButton(
+        "🏠 رجوع",
         callback_data="back"
     )
 
-    markup.add(share, back)
+    markup.add(start_btn)
+    markup.add(back_btn)
 
     bot.send_message(
         call.message.chat.id,
@@ -132,7 +136,7 @@ def get_title(message):
 
     msg = bot.send_message(
         message.chat.id,
-        "👥 ارسل عدد المشاركين:"
+        "👥 ارسل عدد الأعضاء:"
     )
 
     bot.register_next_step_handler(msg, get_members)
@@ -154,7 +158,7 @@ def get_winners(message):
 
     msg = bot.send_message(
         message.chat.id,
-        "📢 ارسل رابط قناتك:"
+        "📢 ارسل رابط القناة:"
     )
 
     bot.register_next_step_handler(msg, finish_vip)
@@ -165,13 +169,15 @@ def finish_vip(message):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    share = InlineKeyboardButton(
+    share_btn = InlineKeyboardButton(
         "📢 مشاركة",
         switch_inline_query_chosen_chat={
             "query": f"""🌈 روليت مميز
 
 📝 {data['title']}
+
 👥 {data['members']}
+
 🏆 {data['winners']}
 
 📢 {message.text}
@@ -182,22 +188,17 @@ def finish_vip(message):
         }
     )
 
-    markup.add(share)
+    back_btn = InlineKeyboardButton(
+        "🏠 رجوع",
+        callback_data="back"
+    )
+
+    markup.add(share_btn)
+    markup.add(back_btn)
 
     bot.send_message(
         message.chat.id,
-        f"""
-🌈 تم إنشاء الروليت المميز
-
-📝 العنوان:
-{data['title']}
-
-👥 العدد:
-{data['members']}
-
-🏆 الفائزين:
-{data['winners']}
-""",
+        "✅ تم إنشاء الروليت المميز",
         reply_markup=markup
     )
 
@@ -211,8 +212,4 @@ def back(call):
 
 print("BOT IS RUNNING...")
 
-while True:
-    try:
-        bot.infinity_polling(skip_pending=True)
-    except Exception as e:
-        print(e)
+bot.infinity_polling(skip_pending=True)
