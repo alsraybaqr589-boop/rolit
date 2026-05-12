@@ -1,5 +1,5 @@
 import telebot
-from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import *
 import random
 
 TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
@@ -8,6 +8,8 @@ bot = telebot.TeleBot(TOKEN)
 
 vip_data = {}
 
+PHOTO = "https://i.imgur.com/2uQZQ0K.jpeg"
+
 # ---------------- START ---------------- #
 
 @bot.message_handler(commands=['start'])
@@ -15,16 +17,31 @@ def start(message):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    btn1 = InlineKeyboardButton("🌐 روليت عادي", callback_data="normal")
-    btn2 = InlineKeyboardButton("🪵 روليت أحكام", callback_data="rules")
-    btn3 = InlineKeyboardButton("🌈 روليت مميز", callback_data="vip")
-    btn4 = InlineKeyboardButton("📢 القناة", url="https://t.me/NQJNQ")
+    normal = InlineKeyboardButton(
+        "🌐 روليت عادي",
+        callback_data="normal"
+    )
 
-    markup.add(btn1, btn2, btn3, btn4)
+    rules = InlineKeyboardButton(
+        "🪵 روليت أحكام",
+        callback_data="rules"
+    )
+
+    vip = InlineKeyboardButton(
+        "🌈 روليت مميز",
+        callback_data="vip"
+    )
+
+    channel = InlineKeyboardButton(
+        "📢 القناة",
+        url="https://t.me/NQJNQ"
+    )
+
+    markup.add(normal, rules, vip, channel)
 
     bot.send_photo(
         message.chat.id,
-        "https://i.imgur.com/2uQZQ0K.jpeg",
+        PHOTO,
         caption="""
 🎮 أهلاً بك في بوت الروليت
 
@@ -43,15 +60,26 @@ def normal(call):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    start_btn = InlineKeyboardButton("🎭 ابدأ الآن", switch_inline_query="روليت عادي")
-    ch_btn = InlineKeyboardButton("📢 القناة", url="https://t.me/NQJNQ")
-    back_btn = InlineKeyboardButton("🏠 خروج", callback_data="back")
+    share = InlineKeyboardButton(
+        "📢 مشاركة",
+        switch_inline_query_chosen_chat={
+            "query": "روليت عادي 🎭",
+            "allow_user_chats": True,
+            "allow_group_chats": True,
+            "allow_channel_chats": True
+        }
+    )
 
-    markup.add(start_btn, ch_btn, back_btn)
+    back = InlineKeyboardButton(
+        "🏠 خروج",
+        callback_data="back"
+    )
+
+    markup.add(share, back)
 
     bot.send_message(
         call.message.chat.id,
-        "🌐 تم اختيار الروليت العادي\n\nاضغط على الزر أدناه:",
+        "🌐 تم اختيار الروليت العادي",
         reply_markup=markup
     )
 
@@ -62,15 +90,26 @@ def rules(call):
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    start_btn = InlineKeyboardButton("🎭 ابدأ الآن", switch_inline_query="روليت أحكام")
-    ch_btn = InlineKeyboardButton("📢 القناة", url="https://t.me/NQJNQ")
-    back_btn = InlineKeyboardButton("🏠 خروج", callback_data="back")
+    share = InlineKeyboardButton(
+        "📢 مشاركة",
+        switch_inline_query_chosen_chat={
+            "query": "روليت أحكام 🪵",
+            "allow_user_chats": True,
+            "allow_group_chats": True,
+            "allow_channel_chats": True
+        }
+    )
 
-    markup.add(start_btn, ch_btn, back_btn)
+    back = InlineKeyboardButton(
+        "🏠 خروج",
+        callback_data="back"
+    )
+
+    markup.add(share, back)
 
     bot.send_message(
         call.message.chat.id,
-        "🪵 تم اختيار روليت الأحكام\n\nاضغط على الزر أدناه:",
+        "🪵 تم اختيار روليت الأحكام",
         reply_markup=markup
     )
 
@@ -79,50 +118,76 @@ def rules(call):
 @bot.callback_query_handler(func=lambda call: call.data == "vip")
 def vip(call):
 
-    msg = bot.send_message(call.message.chat.id, "📝 ارسل عنوان الروليت:")
+    msg = bot.send_message(
+        call.message.chat.id,
+        "📝 ارسل عنوان الروليت:"
+    )
+
     bot.register_next_step_handler(msg, get_title)
 
 def get_title(message):
 
     vip_data[message.chat.id] = {}
-    vip_data[message.chat.id]['title'] = message.text
+    vip_data[message.chat.id]["title"] = message.text
 
-    msg = bot.send_message(message.chat.id, "👥 ارسل عدد المشاركين:")
+    msg = bot.send_message(
+        message.chat.id,
+        "👥 ارسل عدد المشاركين:"
+    )
+
     bot.register_next_step_handler(msg, get_members)
 
 def get_members(message):
 
-    vip_data[message.chat.id]['members'] = message.text
+    vip_data[message.chat.id]["members"] = message.text
 
-    msg = bot.send_message(message.chat.id, "🏆 ارسل عدد الفائزين:")
+    msg = bot.send_message(
+        message.chat.id,
+        "🏆 ارسل عدد الفائزين:"
+    )
+
     bot.register_next_step_handler(msg, get_winners)
 
 def get_winners(message):
 
-    vip_data[message.chat.id]['winners'] = message.text
+    vip_data[message.chat.id]["winners"] = message.text
 
     msg = bot.send_message(
         message.chat.id,
-        "📢 ارسل رابط قناتك وارفع البوت ادمن"
+        "📢 ارسل رابط قناتك:"
     )
 
-    bot.register_next_step_handler(msg, send_vip)
+    bot.register_next_step_handler(msg, finish_vip)
 
-def send_vip(message):
+def finish_vip(message):
 
     data = vip_data[message.chat.id]
 
     markup = InlineKeyboardMarkup(row_width=1)
 
-    join_btn = InlineKeyboardButton(
-        "🎉 مشاركة",
-        url=message.text
+    share = InlineKeyboardButton(
+        "📢 مشاركة",
+        switch_inline_query_chosen_chat={
+            "query": f"""🌈 روليت مميز
+
+📝 {data['title']}
+👥 {data['members']}
+🏆 {data['winners']}
+
+📢 {message.text}
+""",
+            "allow_user_chats": True,
+            "allow_group_chats": True,
+            "allow_channel_chats": True
+        }
     )
 
-    markup.add(join_btn)
+    markup.add(share)
 
-    text = f"""
-🌈 روليت مميز
+    bot.send_message(
+        message.chat.id,
+        f"""
+🌈 تم إنشاء الروليت المميز
 
 📝 العنوان:
 {data['title']}
@@ -132,11 +197,7 @@ def send_vip(message):
 
 🏆 الفائزين:
 {data['winners']}
-"""
-
-    bot.send_message(
-        message.chat.id,
-        text,
+""",
         reply_markup=markup
     )
 
@@ -154,4 +215,4 @@ while True:
     try:
         bot.infinity_polling(skip_pending=True)
     except Exception as e:
-        print("ERROR:", e)
+        print(e)
