@@ -1,29 +1,18 @@
-import sqlite3
+import aiosqlite
 
-conn = sqlite3.connect("roulette.db")
+DB_NAME = "rolit.db"
 
-cur = conn.cursor()
 
-# جدول الروليتات
-cur.execute('''
-CREATE TABLE IF NOT EXISTS roulettes(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT,
-    max_users INTEGER,
-    winners INTEGER,
-    channel TEXT,
-    creator INTEGER,
-    type TEXT
-)
-''')
+async def create_db():
+    async with aiosqlite.connect(DB_NAME) as db:
 
-# جدول المشاركين
-cur.execute('''
-CREATE TABLE IF NOT EXISTS participants(
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    roulette_id INTEGER,
-    user_id INTEGER
-)
-''')
+        await db.execute("""
+        CREATE TABLE IF NOT EXISTS roulettes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            creator_id INTEGER,
+            title TEXT,
+            players TEXT
+        )
+        """)
 
-conn.commit()
+        await db.commit()
