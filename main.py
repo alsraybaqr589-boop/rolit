@@ -1,53 +1,28 @@
-# -*- coding: utf-8 -*-
-
-from telegram import (
-    Update,
-    InlineKeyboardButton,
-    InlineKeyboardMarkup
-)
-
-from telegram.ext import (
-    ApplicationBuilder,
-    CommandHandler,
-    CallbackQueryHandler,
-    ContextTypes
-)
+import telebot
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+import random
 
 TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
+bot = telebot.TeleBot(TOKEN)
 
-# -----------------------------
-# /start
-# -----------------------------
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+vip_data = {}
 
-    keyboard = [
+# ---------------- START ---------------- #
 
-        [
-            InlineKeyboardButton(
-                "🌐 روليت عادي",
-                callback_data="normal"
-            ),
+@bot.message_handler(commands=['start'])
+def start(message):
 
-            InlineKeyboardButton(
-                "📜 روليت أحكام",
-                callback_data="rules"
-            )
-        ],
+    markup = InlineKeyboardMarkup(row_width=1)
 
-        [
-            InlineKeyboardButton(
-                "🌈 روليت مميز",
-                callback_data="vip"
-            )
-        ],
+    btn1 = InlineKeyboardButton("🌐 روليت عادي", callback_data="normal")
+    btn2 = InlineKeyboardButton("📜 روليت أحكام", callback_data="rules")
+    btn3 = InlineKeyboardButton("🌈 روليت مميز", callback_data="vip")
+    btn4 = InlineKeyboardButton("📢 القناه", url="https://t.me/USERNAME")
 
-        [
-            InlineKeyboardButton(
-                "📢 القناة",
-                url="https://t.me/USERNAME"
-            )
-        ]
-    ]
+    markup.add(btn1)
+    markup.add(btn2)
+    markup.add(btn3)
+    markup.add(btn4)
 
     text = """
 🎮 أهلاً بك في بوت الروليت
@@ -58,151 +33,171 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • روليت VIP
 """
 
-    await update.message.reply_text(
+    with open("photo.jpg", "rb") as photo:
+        bot.send_photo(
+            message.chat.id,
+            photo,
+            caption=text,
+            reply_markup=markup
+        )
+
+# ---------------- روليت عادي ---------------- #
+
+@bot.callback_query_handler(func=lambda call: call.data == "normal")
+def normal(call):
+
+    markup = InlineKeyboardMarkup(row_width=1)
+
+    start_btn = InlineKeyboardButton(
+        "🎭 ابدأ الآن",
+        switch_inline_query="روليت عادي"
+    )
+
+    back_btn = InlineKeyboardButton(
+        "🏠 رجوع",
+        callback_data="back"
+    )
+
+    channel_btn = InlineKeyboardButton(
+        "📢 القناه",
+        url="https://t.me/NQJNQ"
+    )
+
+    markup.add(start_btn)
+    markup.add(back_btn)
+    markup.add(channel_btn)
+
+    bot.send_message(
+        call.message.chat.id,
+        "🌐 تم اختيار الروليت العادي\n\nاضغط على الزر أدناه لبدء اللعب:",
+        reply_markup=markup
+    )
+
+# ---------------- روليت أحكام ---------------- #
+
+@bot.callback_query_handler(func=lambda call: call.data == "rules")
+def rules(call):
+
+    markup = InlineKeyboardMarkup(row_width=1)
+
+    start_btn = InlineKeyboardButton(
+        "📜 ابدأ الآن",
+        switch_inline_query="روليت احكام"
+    )
+
+    back_btn = InlineKeyboardButton(
+        "🏠 رجوع",
+        callback_data="back"
+    )
+
+    channel_btn = InlineKeyboardButton(
+        "📢 القناه",
+        url="https://t.me/NQJNQ"
+    )
+
+    markup.add(start_btn)
+    markup.add(back_btn)
+    markup.add(channel_btn)
+
+    bot.send_message(
+        call.message.chat.id,
+        "📜 تم اختيار روليت الأحكام\n\nاضغط على الزر أدناه:",
+        reply_markup=markup
+    )
+
+# ---------------- روليت VIP ---------------- #
+
+@bot.callback_query_handler(func=lambda call: call.data == "vip")
+def vip(call):
+
+    msg = bot.send_message(
+        call.message.chat.id,
+        "📝 ارسل عنوان الروليت:"
+    )
+
+    bot.register_next_step_handler(msg, vip_title)
+
+def vip_title(message):
+
+    vip_data[message.chat.id] = {}
+    vip_data[message.chat.id]["title"] = message.text
+
+    msg = bot.send_message(
+        message.chat.id,
+        "👥 ارسل عدد الاعضاء:"
+    )
+
+    bot.register_next_step_handler(msg, vip_members)
+
+def vip_members(message):
+
+    vip_data[message.chat.id]["members"] = message.text
+
+    msg = bot.send_message(
+        message.chat.id,
+        "🏆 ارسل عدد الفائزين:"
+    )
+
+    bot.register_next_step_handler(msg, vip_winners)
+
+def vip_winners(message):
+
+    vip_data[message.chat.id]["winners"] = message.text
+
+    msg = bot.send_message(
+        message.chat.id,
+        "📢 ارسل معرف القناة بدون @\n\nوتأكد رافع البوت ادمن"
+    )
+
+    bot.register_next_step_handler(msg, vip_channel)
+
+def vip_channel(message):
+
+    vip_data[message.chat.id]["channel"] = message.text
+
+    data = vip_data[message.chat.id]
+
+    markup = InlineKeyboardMarkup(row_width=1)
+
+    share_btn = InlineKeyboardButton(
+        "🎉 مشاركة",
+        switch_inline_query=data["title"]
+    )
+
+    channel_btn = InlineKeyboardButton(
+        "📢 القناه",
+        url=f"https://t.me/NQJNQ{data['channel']}"
+    )
+
+    markup.add(share_btn)
+    markup.add(channel_btn)
+
+    text = f"""
+🌈 روليت مميز
+
+📝 العنوان:
+{data['title']}
+
+👥 العدد:
+{data['members']}
+
+🏆 الفائزين:
+{data['winners']}
+"""
+
+    bot.send_message(
+        message.chat.id,
         text,
-        reply_markup=InlineKeyboardMarkup(keyboard)
+        reply_markup=markup
     )
 
-# -----------------------------
-# القائمة
-# -----------------------------
-async def roulette_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# ---------------- رجوع ---------------- #
 
-    query = update.callback_query
-    await query.answer()
+@bot.callback_query_handler(func=lambda call: call.data == "back")
+def back(call):
+    start(call.message)
 
-    data = query.data
+# ---------------- تشغيل ---------------- #
 
-    # -------------------------
-    # روليت عادي
-    # -------------------------
-    if data == "normal":
-
-        keyboard = [
-
-            [
-                InlineKeyboardButton(
-                    "🎭 ابدأ الآن",
-                    switch_inline_query="روليت عادي"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    "📢 القناة",
-                    url="https://t.me/NQJNQ"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    "🏠 خروج",
-                    callback_data="back"
-                )
-            ]
-        ]
-
-        await query.message.reply_text(
-            "🌐 تم اختيار الروليت العادي\n\nاضغط على الزر أدناه:",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-    # -------------------------
-    # روليت أحكام
-    # -------------------------
-    elif data == "rules":
-
-        keyboard = [
-
-            [
-                InlineKeyboardButton(
-                    "📜 ابدأ الآن",
-                    switch_inline_query="روليت أحكام"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    "📢 القناة",
-                    url="https://t.me/USERNAME"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    "🏠 خروج",
-                    callback_data="back"
-                )
-            ]
-        ]
-
-        await query.message.reply_text(
-            "📜 تم اختيار روليت الأحكام\n\nاضغط على الزر أدناه:",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-    # -------------------------
-    # روليت مميز
-    # -------------------------
-    elif data == "vip":
-
-        await query.message.reply_text(
-            "🌈 قسم الروليت المميز\n\n"
-            "هذا القسم تكدر تطوره لاحقاً."
-        )
-
-    # -------------------------
-    # رجوع
-    # -------------------------
-    elif data == "back":
-
-        keyboard = [
-
-            [
-                InlineKeyboardButton(
-                    "🌐 روليت عادي",
-                    callback_data="normal"
-                ),
-
-                InlineKeyboardButton(
-                    "📜 روليت أحكام",
-                    callback_data="rules"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    "🌈 روليت مميز",
-                    callback_data="vip"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    "📢 القناة",
-                    url="https://t.me/USERNAME"
-                )
-            ]
-        ]
-
-        await query.message.reply_text(
-            "🏠 رجعت للقائمة الرئيسية",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-# -----------------------------
-# تشغيل البوت
-# -----------------------------
-app = ApplicationBuilder().token(TOKEN).build()
-
-app.add_handler(CommandHandler("start", start))
-
-app.add_handler(
-    CallbackQueryHandler(
-        roulette_menu
-    )
-)
-
-print("البوت شغال ✅")
-
-app.run_polling()
+print("BOT IS RUNNING...")
+bot.infinity_polling()
