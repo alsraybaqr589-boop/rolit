@@ -56,8 +56,11 @@ text = """
 📦 روليت أحكام
 🌈 روليت مميز
 """
-   reply_markup=markup
-    )
+bot.send_message(
+    message.chat.id,
+    text,
+    reply_markup=markup
+)
 
 # ---------------- روليت عادي ---------------- #
 
