@@ -12,10 +12,12 @@ from aiogram.filters import CommandStart
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 
-TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
+from config import BOT_TOKEN
+from keyboards import main_menu, back_menu
+from database import create_db
 
 bot = Bot(
-    token=TOKEN,
+    token=BOT_TOKEN,
     default=DefaultBotProperties(
         parse_mode=ParseMode.HTML
     )
@@ -23,120 +25,28 @@ bot = Bot(
 
 dp = Dispatcher()
 
-# تخزين مؤقت للروليتات
+# تخزين الروليتات
 roulettes = {}
-
-
-# القائمة الرئيسية
-menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-
-        [
-            InlineKeyboardButton(
-                text="🌐 روليت عادي",
-                callback_data="normal"
-            ),
-
-            InlineKeyboardButton(
-                text="📜 روليت أحكام",
-                callback_data="rules"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="🌈 روليت مميز",
-                callback_data="vip"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="📢 قناتنا",
-                url="https://t.me/NQJNQ"
-            )
-        ]
-    ]
-)
-
-
-# قوائم الأقسام
-normal_menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-
-        [
-            InlineKeyboardButton(
-                text="🎮 إنشاء روليت عادي",
-                callback_data="create_normal"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="🏠 رجوع",
-                callback_data="back_main"
-            )
-        ]
-    ]
-)
-
-rules_menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-
-        [
-            InlineKeyboardButton(
-                text="📜 إنشاء روليت أحكام",
-                callback_data="create_rules"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="🏠 رجوع",
-                callback_data="back_main"
-            )
-        ]
-    ]
-)
-
-vip_menu = InlineKeyboardMarkup(
-    inline_keyboard=[
-
-        [
-            InlineKeyboardButton(
-                text="🌈 إنشاء روليت VIP",
-                callback_data="create_vip"
-            )
-        ],
-
-        [
-            InlineKeyboardButton(
-                text="🏠 رجوع",
-                callback_data="back_main"
-            )
-        ]
-    ]
-)
-
-
-# رسالة البداية
-start_text = """
-🎮 أهلاً بك في بوت الروليت
-
-✨ الأقسام:
-• روليت عادي
-• روليت أحكام
-• روليت VIP
-"""
 
 
 # ستارت
 @dp.message(CommandStart())
 async def start(message: Message):
 
+    text = """
+🎮 أهلاً بك في بوت الروليت
+
+✨ المميزات:
+• روليت عادي
+• روليت أحكام
+• روليت VIP
+• اختيار فائز
+• دخول مشاركين
+"""
+
     await message.answer(
-        start_text,
-        reply_markup=menu
+        text,
+        reply_markup=main_menu
     )
 
 
@@ -144,29 +54,86 @@ async def start(message: Message):
 @dp.callback_query(F.data == "normal")
 async def normal(callback: CallbackQuery):
 
+    buttons = InlineKeyboardMarkup(
+        inline_keyboard=[
+
+            [
+                InlineKeyboardButton(
+                    text="🎮 إنشاء روليت",
+                    callback_data="create_normal"
+                )
+            ],
+
+            [
+                InlineKeyboardButton(
+                    text="🏠 رجوع",
+                    callback_data="back"
+                )
+            ]
+        ]
+    )
+
     await callback.message.edit_text(
         "🌐 قسم الروليت العادي",
-        reply_markup=normal_menu
+        reply_markup=buttons
     )
 
 
-# الأحكام
+# روليت الأحكام
 @dp.callback_query(F.data == "rules")
 async def rules(callback: CallbackQuery):
 
+    buttons = InlineKeyboardMarkup(
+        inline_keyboard=[
+
+            [
+                InlineKeyboardButton(
+                    text="📜 إنشاء روليت أحكام",
+                    callback_data="create_rules"
+                )
+            ],
+
+            [
+                InlineKeyboardButton(
+                    text="🏠 رجوع",
+                    callback_data="back"
+                )
+            ]
+        ]
+    )
+
     await callback.message.edit_text(
         "📜 قسم روليت الأحكام",
-        reply_markup=rules_menu
+        reply_markup=buttons
     )
 
 
-# VIP
+# روليت VIP
 @dp.callback_query(F.data == "vip")
 async def vip(callback: CallbackQuery):
 
+    buttons = InlineKeyboardMarkup(
+        inline_keyboard=[
+
+            [
+                InlineKeyboardButton(
+                    text="🌈 إنشاء روليت VIP",
+                    callback_data="create_vip"
+                )
+            ],
+
+            [
+                InlineKeyboardButton(
+                    text="🏠 رجوع",
+                    callback_data="back"
+                )
+            ]
+        ]
+    )
+
     await callback.message.edit_text(
         "🌈 قسم الروليت المميز",
-        reply_markup=vip_menu
+        reply_markup=buttons
     )
 
 
@@ -199,7 +166,7 @@ async def create_normal(callback: CallbackQuery):
 
     await callback.message.edit_text(
         f"""
-🎮 روليت عادي جديد
+🎮 روليت جديد
 
 🆔 رقم الروليت:
 {roulette_id}
@@ -224,7 +191,7 @@ async def create_rules(callback: CallbackQuery):
 
             [
                 InlineKeyboardButton(
-                    text="📜 دخول للروليت",
+                    text="📜 دخول",
                     callback_data=f"join_{roulette_id}"
                 )
             ],
@@ -240,7 +207,7 @@ async def create_rules(callback: CallbackQuery):
 
     await callback.message.edit_text(
         f"""
-📜 روليت أحكام جديد
+📜 روليت أحكام
 
 🆔 رقم الروليت:
 {roulette_id}
@@ -265,7 +232,7 @@ async def create_vip(callback: CallbackQuery):
 
             [
                 InlineKeyboardButton(
-                    text="🌈 دخول للروليت",
+                    text="🌈 دخول",
                     callback_data=f"join_{roulette_id}"
                 )
             ],
@@ -281,7 +248,7 @@ async def create_vip(callback: CallbackQuery):
 
     await callback.message.edit_text(
         f"""
-🌈 روليت VIP جديد
+🌈 روليت VIP
 
 🆔 رقم الروليت:
 {roulette_id}
@@ -297,7 +264,9 @@ async def create_vip(callback: CallbackQuery):
 @dp.callback_query(F.data.startswith("join_"))
 async def join(callback: CallbackQuery):
 
-    roulette_id = int(callback.data.split("_")[1])
+    roulette_id = int(
+        callback.data.split("_")[1]
+    )
 
     user = callback.from_user.first_name
 
@@ -312,10 +281,12 @@ async def join(callback: CallbackQuery):
 
     roulettes[roulette_id].append(user)
 
-    count = len(roulettes[roulette_id])
+    count = len(
+        roulettes[roulette_id]
+    )
 
     await callback.answer(
-        "✅ تم دخولك للروليت"
+        "✅ تم دخولك"
     )
 
     await callback.message.edit_text(
@@ -332,11 +303,13 @@ async def join(callback: CallbackQuery):
     )
 
 
-# اختيار فائز
+# اختيار الفائز
 @dp.callback_query(F.data.startswith("winner_"))
 async def winner(callback: CallbackQuery):
 
-    roulette_id = int(callback.data.split("_")[1])
+    roulette_id = int(
+        callback.data.split("_")[1]
+    )
 
     users = roulettes[roulette_id]
 
@@ -362,17 +335,30 @@ async def winner(callback: CallbackQuery):
 
 
 # رجوع
-@dp.callback_query(F.data == "back_main")
-async def back_main(callback: CallbackQuery):
+@dp.callback_query(F.data == "back")
+async def back(callback: CallbackQuery):
+
+    text = """
+🎮 أهلاً بك في بوت الروليت
+
+✨ المميزات:
+• روليت عادي
+• روليت أحكام
+• روليت VIP
+• اختيار فائز
+• دخول مشاركين
+"""
 
     await callback.message.edit_text(
-        start_text,
-        reply_markup=menu
+        text,
+        reply_markup=main_menu
     )
 
 
 # تشغيل
 async def main():
+
+    await create_db()
 
     print("BOT STARTED")
 
