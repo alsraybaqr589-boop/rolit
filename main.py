@@ -1,369 +1,247 @@
-import asyncio
-import random
-
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import (
-    Message,
-    CallbackQuery,
-    InlineKeyboardMarkup,
-    InlineKeyboardButton
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
 )
-from aiogram.filters import CommandStart
-from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties
-
-from config import BOT_TOKEN
-from keyboards import main_menu, back_menu
-from database import create_db
-
-bot = Bot(
-    token=BOT_TOKEN,
-    default=DefaultBotProperties(
-        parse_mode=ParseMode.HTML
-    )
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
 )
 
-dp = Dispatcher()
+TOKEN = "8735268386:AAFwZAjHtxosdtVczb054Ckm5mI9PpRmGKE"
 
-# تخزين الروليتات
-roulettes = {}
+user_data_store = {}
 
+# ================= START =================
 
-# ستارت
-@dp.message(CommandStart())
-async def start(message: Message):
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    keyboard = [
+        [
+            InlineKeyboardButton("🌐 روليت عادي", callback_data="normal"),
+            InlineKeyboardButton("📜 روليت أحكام", callback_data="rules")
+        ],
+        [
+            InlineKeyboardButton("🌈 روليت مميز", callback_data="vip")
+        ],
+        [
+            InlineKeyboardButton("📢 قناتنا", url="https://t.me/NQJNQ")
+        ]
+    ]
 
     text = """
 🎮 أهلاً بك في بوت الروليت
 
-✨ المميزات:
+✨ الأقسام:
 • روليت عادي
 • روليت أحكام
 • روليت VIP
-• اختيار فائز
-• دخول مشاركين
 """
 
-    await message.answer(
+    await update.message.reply_text(
         text,
-        reply_markup=main_menu
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# ================= اختيار النوع =================
 
-# الروليت العادي
-@dp.callback_query(F.data == "normal")
-async def normal(callback: CallbackQuery):
+async def roulette_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-    buttons = InlineKeyboardMarkup(
-        inline_keyboard=[
+    roulette_type = query.data
+    user_id = query.from_user.id
 
-            [
-                InlineKeyboardButton(
-                    text="🎮 إنشاء روليت",
-                    callback_data="create_normal"
-                )
-            ],
+    user_data_store[user_id] = {
+        "type": roulette_type
+    }
 
-            [
-                InlineKeyboardButton(
-                    text="🏠 رجوع",
-                    callback_data="back"
-                )
-            ]
-        ]
+    names = {
+        "normal": "🌐 روليت عادي",
+        "rules": "📜 روليت أحكام",
+        "vip": "🌈 روليت VIP"
+    }
+
+    keyboard = [
+        [InlineKeyboardButton("🎭 ابدأ الآن", callback_data="create_roulette")],
+        [InlineKeyboardButton("🏠 رجوع", callback_data="back_home")]
+    ]
+
+    await query.message.reply_text(
+        f"تم اختيار {names[roulette_type]}\n\nاضغط على الزر أدناه لبدء اللعب:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
-    await callback.message.edit_text(
-        "🌐 قسم الروليت العادي",
-        reply_markup=buttons
+# ================= إنشاء الروليت =================
+
+async def create_roulette(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    user_id = query.from_user.id
+    user_data_store[user_id]["step"] = "title"
+
+    keyboard = [
+        [InlineKeyboardButton("إلغاء", callback_data="cancel")]
+    ]
+
+    await query.message.reply_text(
+        "📝 أرسل الآن عنوان المسابقة:",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# ================= استقبال البيانات =================
 
-# روليت الأحكام
-@dp.callback_query(F.data == "rules")
-async def rules(callback: CallbackQuery):
+async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
 
-    buttons = InlineKeyboardMarkup(
-        inline_keyboard=[
-
-            [
-                InlineKeyboardButton(
-                    text="📜 إنشاء روليت أحكام",
-                    callback_data="create_rules"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    text="🏠 رجوع",
-                    callback_data="back"
-                )
-            ]
-        ]
-    )
-
-    await callback.message.edit_text(
-        "📜 قسم روليت الأحكام",
-        reply_markup=buttons
-    )
-
-
-# روليت VIP
-@dp.callback_query(F.data == "vip")
-async def vip(callback: CallbackQuery):
-
-    buttons = InlineKeyboardMarkup(
-        inline_keyboard=[
-
-            [
-                InlineKeyboardButton(
-                    text="🌈 إنشاء روليت VIP",
-                    callback_data="create_vip"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    text="🏠 رجوع",
-                    callback_data="back"
-                )
-            ]
-        ]
-    )
-
-    await callback.message.edit_text(
-        "🌈 قسم الروليت المميز",
-        reply_markup=buttons
-    )
-
-
-# إنشاء روليت عادي
-@dp.callback_query(F.data == "create_normal")
-async def create_normal(callback: CallbackQuery):
-
-    roulette_id = random.randint(1000, 9999)
-
-    roulettes[roulette_id] = []
-
-    buttons = InlineKeyboardMarkup(
-        inline_keyboard=[
-
-            [
-                InlineKeyboardButton(
-                    text="🎯 دخول",
-                    callback_data=f"join_{roulette_id}"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    text="🏆 اختيار فائز",
-                    callback_data=f"winner_{roulette_id}"
-                )
-            ]
-        ]
-    )
-
-    await callback.message.edit_text(
-        f"""
-🎮 روليت جديد
-
-🆔 رقم الروليت:
-{roulette_id}
-
-👥 عدد المشاركين:
-0
-""",
-        reply_markup=buttons
-    )
-
-
-# إنشاء روليت أحكام
-@dp.callback_query(F.data == "create_rules")
-async def create_rules(callback: CallbackQuery):
-
-    roulette_id = random.randint(1000, 9999)
-
-    roulettes[roulette_id] = []
-
-    buttons = InlineKeyboardMarkup(
-        inline_keyboard=[
-
-            [
-                InlineKeyboardButton(
-                    text="📜 دخول",
-                    callback_data=f"join_{roulette_id}"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    text="⚖️ اختيار شخص",
-                    callback_data=f"winner_{roulette_id}"
-                )
-            ]
-        ]
-    )
-
-    await callback.message.edit_text(
-        f"""
-📜 روليت أحكام
-
-🆔 رقم الروليت:
-{roulette_id}
-
-👥 عدد المشاركين:
-0
-""",
-        reply_markup=buttons
-    )
-
-
-# إنشاء VIP
-@dp.callback_query(F.data == "create_vip")
-async def create_vip(callback: CallbackQuery):
-
-    roulette_id = random.randint(1000, 9999)
-
-    roulettes[roulette_id] = []
-
-    buttons = InlineKeyboardMarkup(
-        inline_keyboard=[
-
-            [
-                InlineKeyboardButton(
-                    text="🌈 دخول",
-                    callback_data=f"join_{roulette_id}"
-                )
-            ],
-
-            [
-                InlineKeyboardButton(
-                    text="🏆 سحب فائز VIP",
-                    callback_data=f"winner_{roulette_id}"
-                )
-            ]
-        ]
-    )
-
-    await callback.message.edit_text(
-        f"""
-🌈 روليت VIP
-
-🆔 رقم الروليت:
-{roulette_id}
-
-👥 عدد المشاركين:
-0
-""",
-        reply_markup=buttons
-    )
-
-
-# دخول للروليت
-@dp.callback_query(F.data.startswith("join_"))
-async def join(callback: CallbackQuery):
-
-    roulette_id = int(
-        callback.data.split("_")[1]
-    )
-
-    user = callback.from_user.first_name
-
-    if user in roulettes[roulette_id]:
-
-        await callback.answer(
-            "❌ أنت مشارك بالفعل",
-            show_alert=True
-        )
-
+    if user_id not in user_data_store:
         return
 
-    roulettes[roulette_id].append(user)
+    data = user_data_store[user_id]
 
-    count = len(
-        roulettes[roulette_id]
-    )
+    if "step" not in data:
+        return
 
-    await callback.answer(
-        "✅ تم دخولك"
-    )
+    text = update.message.text
 
-    await callback.message.edit_text(
-        f"""
-🎯 تم تحديث الروليت
+    # عنوان
+    if data["step"] == "title":
+        data["title"] = text
+        data["step"] = "members"
+
+        await update.message.reply_text(
+            "👥 أرسل الحد الأقصى للمشاركين:"
+        )
+        return
+
+    # المشاركين
+    if data["step"] == "members":
+        data["members"] = text
+        data["step"] = "winners"
+
+        await update.message.reply_text(
+            "🏆 أرسل عدد الفائزين:"
+        )
+        return
+
+    # الفائزين
+    if data["step"] == "winners":
+        data["winners"] = text
+        data["step"] = "channel"
+
+        await update.message.reply_text(
+            "📢 أرسل الآن معرف القناة فقط\n\nمثال:\nNQJNQ\n\nتأكد من رفع البوت أدمن بالقناة"
+        )
+        return
+
+    # القناة
+    if data["step"] == "channel":
+
+        channel = text.replace("@", "").replace("https://t.me/", "")
+
+        roulette_id = str(user_id)[-4:]
+
+        roulette_name = {
+            "normal": "🌐 روليت عادي",
+            "rules": "📜 روليت أحكام",
+            "vip": "🌈 روليت VIP"
+        }
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "🎉 دخول",
+                    url=f"https://t.me/{context.bot.username}?start=join_{roulette_id}"
+                )
+            ]
+        ]
+
+        message = f"""
+{roulette_name[data['type']]}
 
 🆔 رقم الروليت:
 {roulette_id}
 
-👥 عدد المشاركين:
-{count}
-""",
-        reply_markup=callback.message.reply_markup
-    )
+📝 العنوان:
+{data['title']}
 
+👥 الحد الأقصى:
+{data['members']}
 
-# اختيار الفائز
-@dp.callback_query(F.data.startswith("winner_"))
-async def winner(callback: CallbackQuery):
-
-    roulette_id = int(
-        callback.data.split("_")[1]
-    )
-
-    users = roulettes[roulette_id]
-
-    if len(users) == 0:
-
-        await callback.answer(
-            "❌ لا يوجد مشاركين",
-            show_alert=True
-        )
-
-        return
-
-    winner_user = random.choice(users)
-
-    await callback.message.answer(
-        f"""
-🏆 تم اختيار الفائز
-
-🎉 الفائز:
-{winner_user}
-"""
-    )
-
-
-# رجوع
-@dp.callback_query(F.data == "back")
-async def back(callback: CallbackQuery):
-
-    text = """
-🎮 أهلاً بك في بوت الروليت
-
-✨ المميزات:
-• روليت عادي
-• روليت أحكام
-• روليت VIP
-• اختيار فائز
-• دخول مشاركين
+🏆 عدد الفائزين:
+{data['winners']}
 """
 
-    await callback.message.edit_text(
-        text,
-        reply_markup=main_menu
+        try:
+            await context.bot.send_message(
+                chat_id=f"@{channel}",
+                text=message,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+
+            await update.message.reply_text(
+                "✅ تم نشر الروليت بالقناة بنجاح"
+            )
+
+        except Exception as e:
+            await update.message.reply_text(
+                f"❌ فشل النشر\n\nتأكد أن البوت أدمن بالقناة\n\n{e}"
+            )
+
+        data["step"] = None
+
+# ================= رجوع =================
+
+async def back_home(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+
+    keyboard = [
+        [
+            InlineKeyboardButton("🌐 روليت عادي", callback_data="normal"),
+            InlineKeyboardButton("📜 روليت أحكام", callback_data="rules")
+        ],
+        [
+            InlineKeyboardButton("🌈 روليت مميز", callback_data="vip")
+        ],
+        [
+            InlineKeyboardButton("📢 قناتنا", url="https://t.me/NQJNQ")
+        ]
+    ]
+
+    await query.message.reply_text(
+        "🏠 القائمة الرئيسية",
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# ================= إلغاء =================
 
-# تشغيل
-async def main():
+async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
 
-    await create_db()
+    await query.message.reply_text("❌ تم الإلغاء")
 
-    print("BOT STARTED")
+# ================= تشغيل =================
 
-    await dp.start_polling(bot)
+app = ApplicationBuilder().token(TOKEN).build()
 
+app.add_handler(CommandHandler("start", start))
 
-if __name__ == "__main__":
-    asyncio.run(main())
+app.add_handler(CallbackQueryHandler(roulette_type, pattern="^(normal|rules|vip)$"))
+
+app.add_handler(CallbackQueryHandler(create_roulette, pattern="^create_roulette$"))
+
+app.add_handler(CallbackQueryHandler(back_home, pattern="^back_home$"))
+
+app.add_handler(CallbackQueryHandler(cancel, pattern="^cancel$"))
+
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, messages))
+
+print("Bot Started")
+
+app.run_polling()
