@@ -47,7 +47,7 @@ bot.send_photo(
     caption=text,
     reply_markup=markup
 )
-🎮 أهلاً بك في بوت الروليت
+text = "أهلاً بك في بوت الروليت 🎮"
 
 ✨ الأقسام:
 • روليت عادي
