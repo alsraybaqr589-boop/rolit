@@ -17,27 +17,37 @@ TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
 
 roulette_data = {}
 
-# /start
+# البداية
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = """
 🎡 أهلاً بك في بوت الروليت
 
-بوت روليت مخصص للألعاب الترفيهية
-والسحوبات داخل القنوات 🎉
-
-✨ يدعم:
-• روليت عادي
-• روليت الأحكام
-• روليت مميز
-
-نتمنى يعجبكم البوت ❤️
+بوت مخصص للسحوبات والألعاب
+داخل قنوات التليجرام 🎉
 """
 
     keyboard = [
-        [InlineKeyboardButton("🎲 روليت عادي", callback_data="normal")],
-        [InlineKeyboardButton("⚖️ روليت الأحكام", callback_data="rules")],
-        [InlineKeyboardButton("⭐ روليت مميز", callback_data="vip")]
+
+        [InlineKeyboardButton(
+            "🎲 روليت عادي",
+            callback_data="normal"
+        )],
+
+        [InlineKeyboardButton(
+            "⚖️ روليت الأحكام",
+            callback_data="rules"
+        )],
+
+        [InlineKeyboardButton(
+            "⭐ روليت مميز",
+            callback_data="vip"
+        )],
+
+        [InlineKeyboardButton(
+            "📢 القناة",
+            url="https://t.me/NQJNQ"
+        )]
     ]
 
     await update.message.reply_text(
@@ -56,21 +66,43 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # روليت عادي
     if data == "normal":
 
-        context.user_data.clear()
-        context.user_data["type"] = "normal"
+        keyboard = [
 
-        await query.message.reply_text(
-            "📌 ارسل اسم الروليت:"
+            [InlineKeyboardButton(
+                "▶️ بدء",
+                callback_data="start_normal"
+            )],
+
+            [InlineKeyboardButton(
+                "🔙 رجوع",
+                callback_data="back"
+            )]
+        ]
+
+        await query.message.edit_text(
+            "🎲 روليت عادي",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
     # روليت الأحكام
     elif data == "rules":
 
-        context.user_data.clear()
-        context.user_data["type"] = "rules"
+        keyboard = [
 
-        await query.message.reply_text(
-            "⚖️ ارسل اسم روليت الأحكام:"
+            [InlineKeyboardButton(
+                "▶️ بدء",
+                callback_data="start_rules"
+            )],
+
+            [InlineKeyboardButton(
+                "🔙 رجوع",
+                callback_data="back"
+            )]
+        ]
+
+        await query.message.edit_text(
+            "⚖️ روليت الأحكام",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
     # روليت مميز
@@ -80,7 +112,32 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         context.user_data["type"] = "vip"
 
         await query.message.reply_text(
-            "⭐ ارسل عنوان الروليت المميز:"
+            "📌 ارسل اسم الروليت:"
+        )
+
+    # رجوع
+    elif data == "back":
+
+        await start(update, context)
+
+    # بدء العادي
+    elif data == "start_normal":
+
+        context.user_data.clear()
+        context.user_data["type"] = "normal"
+
+        await query.message.reply_text(
+            "📢 ارسل يوزر القناة بدون @"
+        )
+
+    # بدء الأحكام
+    elif data == "start_rules":
+
+        context.user_data.clear()
+        context.user_data["type"] = "rules"
+
+        await query.message.reply_text(
+            "📢 ارسل يوزر القناة بدون @"
         )
 
     # مشاركة
@@ -97,7 +154,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             roulette_data[rid]["players"].append(user)
 
         players = roulette_data[rid]["players"]
-        max_players = roulette_data[rid]["max"]
 
         keyboard = [
             [InlineKeyboardButton(
@@ -108,11 +164,6 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(
                 "🎡 تدوير العجلة",
                 callback_data=f"spin_{rid}"
-            )],
-
-            [InlineKeyboardButton(
-                "📢 قناتنا",
-                url="https://t.me/NQJNQ"
             )]
         ]
 
@@ -120,22 +171,32 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if roulette_data[rid]["type"] == "rules":
 
             text = f"""
-⚖️ {roulette_data[rid]['title']}
+⚖️ روليت الأحكام
 
-👥 المشاركين: {len(players)} من أصل {max_players}
-
-🎭 الحكم سيتم اختياره عشوائياً
+👥 المشاركين: {len(players)}
+🎭 الحكم عشوائي
 """
 
         # روليت عادي
+        elif roulette_data[rid]["type"] == "normal":
+
+            text = f"""
+🎲 روليت عادي
+
+👥 المشاركين: {len(players)}
+🏆 سيتم اختيار الفائز عشوائياً
+"""
+
+        # روليت مميز
         else:
 
             text = f"""
-🎲 {roulette_data[rid]['title']}
+⭐ {roulette_data[rid]['title']}
 
-👥 المشاركين: {len(players)} من أصل {max_players}
+👥 المشاركين: {len(players)} من أصل {roulette_data[rid]['max']}
 
-🏆 لم يتم اختيار الفائز بعد
+🏆 عدد الفائزين:
+{roulette_data[rid]['wins']}
 """
 
         await query.edit_message_text(
@@ -148,41 +209,121 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     text = update.message.text
 
-    # اسم الروليت
-    if "title" not in context.user_data:
+    # روليت عادي
+    if context.user_data.get("type") == "normal":
 
-        context.user_data["title"] = text
+        keyboard = [
+            [InlineKeyboardButton(
+                "🎉 مشاركة (0)",
+                callback_data="join_1"
+            )],
 
-        await update.message.reply_text(
-            "👥 ارسل عدد المشاركين:"
+            [InlineKeyboardButton(
+                "🎡 تدوير العجلة",
+                callback_data="spin_1"
+            )]
+        ]
+
+        roulette_data["1"] = {
+            "players": [],
+            "type": "normal"
+        }
+
+        await context.bot.send_message(
+            chat_id=f"@{text}",
+            text="""
+🎲 روليت عادي
+
+👥 المشاركين: 0
+🏆 سيتم اختيار الفائز عشوائياً
+""",
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-        return
-
-    # عدد المشاركين
-    if "max" not in context.user_data:
-
-        context.user_data["max"] = int(text)
-
         await update.message.reply_text(
-            "📢 ارسل يوزر القناة بدون @"
+            "✅ تم نشر الروليت"
         )
 
-        return
+        context.user_data.clear()
 
-    # يوزر القناة
-    if "channel" not in context.user_data:
+    # روليت الأحكام
+    elif context.user_data.get("type") == "rules":
 
-        context.user_data["channel"] = text.replace("@", "")
+        keyboard = [
+            [InlineKeyboardButton(
+                "🎉 مشاركة (0)",
+                callback_data="join_2"
+            )],
 
-        rid = str(len(roulette_data) + 1)
+            [InlineKeyboardButton(
+                "🎡 تدوير العجلة",
+                callback_data="spin_2"
+            )]
+        ]
+
+        roulette_data["2"] = {
+            "players": [],
+            "type": "rules"
+        }
+
+        await context.bot.send_message(
+            chat_id=f"@{text}",
+            text="""
+⚖️ روليت الأحكام
+
+👥 المشاركين: 0
+🎭 الحكم عشوائي
+""",
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+        await update.message.reply_text(
+            "✅ تم نشر روليت الأحكام"
+        )
+
+        context.user_data.clear()
+
+    # روليت مميز
+    elif context.user_data.get("type") == "vip":
+
+        if "title" not in context.user_data:
+
+            context.user_data["title"] = text
+
+            await update.message.reply_text(
+                "👥 ارسل عدد المشاركين:"
+            )
+
+            return
+
+        if "max" not in context.user_data:
+
+            context.user_data["max"] = text
+
+            await update.message.reply_text(
+                "🏆 ارسل عدد الفائزين:"
+            )
+
+            return
+
+        if "wins" not in context.user_data:
+
+            context.user_data["wins"] = text
+
+            await update.message.reply_text(
+                "📢 ارسل يوزر القناة بدون @"
+            )
+
+            return
+
+        rid = "3"
 
         roulette_data[rid] = {
             "title": context.user_data["title"],
             "max": context.user_data["max"],
-            "channel": context.user_data["channel"],
+            "wins": context.user_data["wins"],
             "players": [],
-            "type": context.user_data["type"]
+            "type": "vip"
         }
 
         keyboard = [
@@ -194,49 +335,29 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             [InlineKeyboardButton(
                 "🎡 تدوير العجلة",
                 callback_data=f"spin_{rid}"
-            )],
-
-            [InlineKeyboardButton(
-                "📢 قناتنا",
-                url="https://t.me/NQJNQ"
             )]
         ]
 
-        # روليت الأحكام
-        if context.user_data["type"] == "rules":
-
-            message_text = f"""
-⚖️ {context.user_data['title']}
-
-👥 المشاركين: 0 من أصل {context.user_data['max']}
-
-🎭 الحكم سيتم اختياره عشوائياً
-"""
-
-        # روليت عادي + المميز
-        else:
-
-            message_text = f"""
-🎲 {context.user_data['title']}
-
-👥 المشاركين: 0 من أصل {context.user_data['max']}
-
-🏆 لم يتم اختيار الفائز بعد
-"""
-
         await context.bot.send_message(
-            chat_id=f"@{context.user_data['channel']}",
-            text=message_text,
+            chat_id=f"@{text}",
+            text=f"""
+⭐ {context.user_data['title']}
+
+👥 المشاركين: 0 من أصل {context.user_data['max']}
+
+🏆 عدد الفائزين:
+{context.user_data['wins']}
+""",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
         await update.message.reply_text(
-            "✅ تم نشر الروليت بالقناة"
+            "✅ تم نشر الروليت المميز"
         )
 
         context.user_data.clear()
 
-# تشغيل البوت
+# تشغيل
 app = ApplicationBuilder().token(TOKEN).build()
 
 app.add_handler(CommandHandler("start", start))
