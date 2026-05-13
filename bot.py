@@ -9,6 +9,9 @@ from aiogram.client.default import DefaultBotProperties
 # حط توكن البوت هنا
 BOT_TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
 
+# حط يوزر القناة هنا
+CHANNEL_USERNAME = "@NQJNQ"
+
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -30,22 +33,27 @@ rules_list = [
 def main_menu():
     kb = InlineKeyboardBuilder()
 
+    # أزرار كبار واحد تحت الثاني
     kb.button(text="🎲 روليت عادي", callback_data="normal")
     kb.button(text="⚖️ روليت أحكام", callback_data="rules")
     kb.button(text="⭐ روليت مميز", callback_data="premium")
+    kb.button(text="📢 NQJNQ", url="https://t.me/NQJNQ")
 
     kb.adjust(1)
+
     return kb.as_markup()
 
 
 @dp.message(CommandStart())
 async def start(message: Message):
+
     await message.answer(
-        "اهلًا بك في بوت الروليت 🎉",
+        "🎉 اهلًا بك في بوت الروليت",
         reply_markup=main_menu()
     )
 
 
+# روليت عادي
 @dp.callback_query(F.data == "normal")
 async def normal(call: CallbackQuery):
 
@@ -62,6 +70,7 @@ async def normal(call: CallbackQuery):
     )
 
 
+# روليت أحكام
 @dp.callback_query(F.data == "rules")
 async def rules(call: CallbackQuery):
 
@@ -78,23 +87,26 @@ async def rules(call: CallbackQuery):
     )
 
 
+# روليت مميز
 @dp.callback_query(F.data == "premium")
 async def premium(call: CallbackQuery):
 
     await call.message.edit_text(
-        "⭐ روليت مميز قيد التطوير"
+        "⭐ روليت مميز\n\nقيد التطوير"
     )
 
 
+# رجوع
 @dp.callback_query(F.data == "back")
 async def back(call: CallbackQuery):
 
     await call.message.edit_text(
-        "القائمة الرئيسية",
+        "🎉 القائمة الرئيسية",
         reply_markup=main_menu()
     )
 
 
+# نشر روليت عادي بالقناة
 @dp.callback_query(F.data == "start_normal")
 async def start_normal(call: CallbackQuery):
 
@@ -105,8 +117,9 @@ async def start_normal(call: CallbackQuery):
 
     kb.adjust(1)
 
-    msg = await call.message.answer(
-        """
+    msg = await bot.send_message(
+        chat_id=CHANNEL_USERNAME,
+        text="""
 🎲 روليت عادي
 
 👥 المشاركين: 0
@@ -118,7 +131,10 @@ async def start_normal(call: CallbackQuery):
 
     participants[msg.message_id] = []
 
+    await call.answer("تم نشر الروليت بالقناة 🎉")
 
+
+# دخول روليت عادي
 @dp.callback_query(F.data == "join_normal")
 async def join_normal(call: CallbackQuery):
 
@@ -137,6 +153,7 @@ async def join_normal(call: CallbackQuery):
     await call.answer("تم دخولك 🎉")
 
 
+# اختيار فائز
 @dp.callback_query(F.data == "pick_normal")
 async def pick_normal(call: CallbackQuery):
 
@@ -157,6 +174,7 @@ async def pick_normal(call: CallbackQuery):
     )
 
 
+# نشر روليت أحكام
 @dp.callback_query(F.data == "start_rules")
 async def start_rules(call: CallbackQuery):
 
@@ -167,8 +185,9 @@ async def start_rules(call: CallbackQuery):
 
     kb.adjust(1)
 
-    msg = await call.message.answer(
-        """
+    msg = await bot.send_message(
+        chat_id=CHANNEL_USERNAME,
+        text="""
 ⚖️ روليت أحكام
 
 👥 المشاركين: 0
@@ -181,6 +200,7 @@ async def start_rules(call: CallbackQuery):
     participants[msg.message_id] = []
 
 
+# دخول روليت أحكام
 @dp.callback_query(F.data == "join_rules")
 async def join_rules(call: CallbackQuery):
 
@@ -199,6 +219,7 @@ async def join_rules(call: CallbackQuery):
     await call.answer("تم دخولك 🎉")
 
 
+# اختيار حكم
 @dp.callback_query(F.data == "pick_rules")
 async def pick_rules(call: CallbackQuery):
 
