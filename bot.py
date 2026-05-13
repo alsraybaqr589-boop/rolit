@@ -23,7 +23,6 @@ import os
 TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
 
 users_data = {}
-joined_users = {}
 
 WELCOME = """
 🎲 بـوت رولـيـت مخصص للألعاب الترفيهية والسحوبات بالقنوات
@@ -70,77 +69,72 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    query = update.inline_query.query
+    results = []
 
     # روليت عادي
-    if "عادي" in query:
+    keyboard_normal = [
 
-        keyboard = [
+        [InlineKeyboardButton(
+            "🎉 مشاركة (0)",
+            callback_data="join_normal"
+        )],
 
-            [InlineKeyboardButton(
-                "🎉 مشاركة",
-                switch_inline_query=""
-            )],
+        [InlineKeyboardButton(
+            "🎡 تدوير العجلة",
+            callback_data="spin_normal"
+        )]
+    ]
 
-            [InlineKeyboardButton(
-                "🎡 تدوير العجلة",
-                callback_data="spin_normal"
-            )]
-        ]
-
-        result = InlineQueryResultArticle(
-            id=str(uuid.uuid4()),
-            title="🎲 روليت عادي",
-            input_message_content=InputTextMessageContent(
-                """
+    normal_result = InlineQueryResultArticle(
+        id=str(uuid.uuid4()),
+        title="🎲 روليت عادي",
+        input_message_content=InputTextMessageContent(
+            """
 🎲 روليت عادي
 
-👥 عدد الأعضاء: 25
+👥 المشاركين: 0 من أصل 25
 🏆 عدد الفائزين: 1
 """
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        ),
+        reply_markup=InlineKeyboardMarkup(keyboard_normal)
+    )
 
-        await update.inline_query.answer(
-            [result],
-            cache_time=1
-        )
+    results.append(normal_result)
 
     # روليت أحكام
-    elif "احكام" in query:
+    keyboard_rules = [
 
-        keyboard = [
+        [InlineKeyboardButton(
+            "🎉 مشاركة (0)",
+            callback_data="join_rules"
+        )],
 
-            [InlineKeyboardButton(
-                "🎉 مشاركة",
-                switch_inline_query=""
-            )],
+        [InlineKeyboardButton(
+            "🎡 تدوير العجلة",
+            callback_data="spin_rules"
+        )]
+    ]
 
-            [InlineKeyboardButton(
-                "🎡 تدوير العجلة",
-                callback_data="spin_rules"
-            )]
-        ]
-
-        result = InlineQueryResultArticle(
-            id=str(uuid.uuid4()),
-            title="⚖️ روليت أحكام",
-            input_message_content=InputTextMessageContent(
-                """
+    rules_result = InlineQueryResultArticle(
+        id=str(uuid.uuid4()),
+        title="⚖️ روليت أحكام",
+        input_message_content=InputTextMessageContent(
+            """
 ⚖️ روليت أحكام
 
-👥 عدد الأعضاء: 25
+👥 المشاركين: 0 من أصل 25
 🏆 عدد الفائزين: 1
 """
-            ),
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
+        ),
+        reply_markup=InlineKeyboardMarkup(keyboard_rules)
+    )
 
-        await update.inline_query.answer(
-            [result],
-            cache_time=1
-        )
+    results.append(rules_result)
+
+    await update.inline_query.answer(
+        results,
+        cache_time=1
+    )
 
 # ================= BUTTONS =================
 
@@ -158,12 +152,12 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             [InlineKeyboardButton(
                 "✅ بدء",
-                switch_inline_query="روليت عادي"
+                switch_inline_query=""
             )],
 
             [InlineKeyboardButton(
-                "🔙 رجوع",
-                callback_data="back"
+                "📢 القناة",
+                url="https://t.me/NQJNQ"
             )]
         ]
 
@@ -183,42 +177,7 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
             [InlineKeyboardButton(
                 "✅ بدء",
-                switch_inline_query="روليت احكام"
-            )],
-
-            [InlineKeyboardButton(
-                "🔙 رجوع",
-                callback_data="back"
-            )]
-        ]
-
-        await query.message.edit_text(
-            """
-⚖️ روليت أحكام
-
-اضغط بدء ثم اختر القناة
-""",
-            reply_markup=InlineKeyboardMarkup(keyboard)
-        )
-
-    # رجوع
-    elif query.data == "back":
-
-        keyboard = [
-
-            [InlineKeyboardButton(
-                "🎲 روليت عادي",
-                callback_data="normal"
-            )],
-
-            [InlineKeyboardButton(
-                "⚖️ روليت أحكام",
-                callback_data="rules"
-            )],
-
-            [InlineKeyboardButton(
-                "⭐ روليت مميز",
-                callback_data="vip"
+                switch_inline_query=""
             )],
 
             [InlineKeyboardButton(
@@ -228,7 +187,11 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
         ]
 
         await query.message.edit_text(
-            WELCOME,
+            """
+⚖️ روليت أحكام
+
+اضغط بدء ثم اختر القناة
+""",
             reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
@@ -243,30 +206,116 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "📝 ارسل اسم الروليت:"
         )
 
-    # تدوير عادي
+    # مشاركة روليت عادي
+    elif query.data == "join_normal":
+
+        text = query.message.text
+
+        try:
+
+            current = int(
+                text.split("المشاركين: ")[1]
+                .split(" من")[0]
+            )
+
+            current += 1
+
+            new_text = f"""
+🎲 روليت عادي
+
+👥 المشاركين: {current} من أصل 25
+🏆 عدد الفائزين: 1
+"""
+
+            keyboard = [
+
+                [InlineKeyboardButton(
+                    f"🎉 مشاركة ({current})",
+                    callback_data="join_normal"
+                )],
+
+                [InlineKeyboardButton(
+                    "🎡 تدوير العجلة",
+                    callback_data="spin_normal"
+                )]
+            ]
+
+            await query.message.edit_text(
+                new_text,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+
+        except:
+            pass
+
+    # مشاركة روليت أحكام
+    elif query.data == "join_rules":
+
+        text = query.message.text
+
+        try:
+
+            current = int(
+                text.split("المشاركين: ")[1]
+                .split(" من")[0]
+            )
+
+            current += 1
+
+            new_text = f"""
+⚖️ روليت أحكام
+
+👥 المشاركين: {current} من أصل 25
+🏆 عدد الفائزين: 1
+"""
+
+            keyboard = [
+
+                [InlineKeyboardButton(
+                    f"🎉 مشاركة ({current})",
+                    callback_data="join_rules"
+                )],
+
+                [InlineKeyboardButton(
+                    "🎡 تدوير العجلة",
+                    callback_data="spin_rules"
+                )]
+            ]
+
+            await query.message.edit_text(
+                new_text,
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+
+        except:
+            pass
+
+    # تدوير روليت عادي
     elif query.data == "spin_normal":
 
-        winners = [
+        names = [
             "Ali",
             "Ahmed",
             "Mustafa",
-            "Hussein"
+            "Hussein",
+            "Zaid"
         ]
 
-        winner = random.choice(winners)
+        winner = random.choice(names)
 
         await query.message.reply_text(
             f"🏆 الفائز:\n{winner}"
         )
 
-    # تدوير أحكام
+    # تدوير روليت أحكام
     elif query.data == "spin_rules":
 
-        winners = [
+        names = [
             "Ali",
             "Ahmed",
             "Mustafa",
-            "Hussein"
+            "Hussein",
+            "Zaid"
         ]
 
         rules = [
@@ -276,14 +325,31 @@ async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "😅 ابعت ستيكر"
         ]
 
-        winner = random.choice(winners)
+        winner = random.choice(names)
         rule = random.choice(rules)
 
         await query.message.reply_text(
             f"🏆 الفائز:\n{winner}\n\n⚖️ الحكم:\n{rule}"
         )
 
-# ================= VIP MESSAGES =================
+    # تدوير روليت مميز
+    elif query.data == "spin_vip":
+
+        names = [
+            "Ali",
+            "Ahmed",
+            "Mustafa",
+            "Hussein",
+            "Zaid"
+        ]
+
+        winner = random.choice(names)
+
+        await query.message.reply_text(
+            f"🏆 الفائز:\n{winner}"
+        )
+
+# ================= VIP =================
 
 async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
@@ -335,8 +401,8 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard = [
 
             [InlineKeyboardButton(
-                "🎉 مشاركة",
-                switch_inline_query=""
+                "🎉 مشاركة (0)",
+                callback_data="join_vip"
             )],
 
             [InlineKeyboardButton(
@@ -350,7 +416,7 @@ async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
             text=f"""
 ⭐ {title}
 
-👥 عدد الأعضاء: {members}
+👥 المشاركين: 0 من أصل {members}
 🏆 عدد الفائزين: {winners}
 """,
             reply_markup=InlineKeyboardMarkup(keyboard)
@@ -369,8 +435,8 @@ def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(InlineQueryHandler(inline_query))
+    app.add_handler(CallbackQueryHandler(buttons))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, messages))
 
     print("Bot Started")
@@ -378,4 +444,3 @@ def main():
     app.run_polling()
 
 if __name__ == "__main__":
-    main()
