@@ -16,7 +16,7 @@ from telegram.ext import (
 import random
 import os
 
-TOKEN = os.getenv("8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo")
+TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
 
 users_data = {}
 joined_users = {}
