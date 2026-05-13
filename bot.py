@@ -9,9 +9,6 @@ from aiogram.client.default import DefaultBotProperties
 # حط توكن البوت هنا
 BOT_TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
 
-# حط يوزر القناة هنا
-CHANNEL_USERNAME = "@NQJNQ"
-
 bot = Bot(
     token=BOT_TOKEN,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
@@ -33,12 +30,13 @@ rules_list = [
 def main_menu():
     kb = InlineKeyboardBuilder()
 
-    # أزرار كبار واحد تحت الثاني
+    # أزرار كبار
     kb.button(text="🎲 روليت عادي", callback_data="normal")
     kb.button(text="⚖️ روليت أحكام", callback_data="rules")
     kb.button(text="⭐ روليت مميز", callback_data="premium")
     kb.button(text="📢 NQJNQ", url="https://t.me/NQJNQ")
 
+    # كل زر بسطر
     kb.adjust(1)
 
     return kb.as_markup()
@@ -106,32 +104,35 @@ async def back(call: CallbackQuery):
     )
 
 
-# نشر روليت عادي بالقناة
+# نشر روليت عادي
 @dp.callback_query(F.data == "start_normal")
 async def start_normal(call: CallbackQuery):
 
     kb = InlineKeyboardBuilder()
 
-    kb.button(text="🎉 مشاركة", callback_data="join_normal")
+    # زر مشاركة حقيقي
+    kb.button(
+        text="🎉 مشاركة",
+        switch_inline_query="تعال شارك بالروليت 🎲"
+    )
+
+    kb.button(text="🎯 دخول", callback_data="join_normal")
     kb.button(text="🏆 اختيار فائز", callback_data="pick_normal")
 
     kb.adjust(1)
 
-    msg = await bot.send_message(
-        chat_id=CHANNEL_USERNAME,
-        text="""
+    msg = await call.message.answer(
+        """
 🎲 روليت عادي
 
 👥 المشاركين: 0
 
-اضغط مشاركة للدخول
+اضغط دخول للمشاركة
         """,
         reply_markup=kb.as_markup()
     )
 
     participants[msg.message_id] = []
-
-    await call.answer("تم نشر الروليت بالقناة 🎉")
 
 
 # دخول روليت عادي
@@ -180,19 +181,24 @@ async def start_rules(call: CallbackQuery):
 
     kb = InlineKeyboardBuilder()
 
-    kb.button(text="🎉 مشاركة", callback_data="join_rules")
+    # زر مشاركة حقيقي
+    kb.button(
+        text="🎉 مشاركة",
+        switch_inline_query="تعال شارك بروليت الأحكام ⚖️"
+    )
+
+    kb.button(text="🎯 دخول", callback_data="join_rules")
     kb.button(text="⚖️ اختيار", callback_data="pick_rules")
 
     kb.adjust(1)
 
-    msg = await bot.send_message(
-        chat_id=CHANNEL_USERNAME,
-        text="""
+    msg = await call.message.answer(
+        """
 ⚖️ روليت أحكام
 
 👥 المشاركين: 0
 
-اضغط مشاركة للدخول
+اضغط دخول للمشاركة
         """,
         reply_markup=kb.as_markup()
     )
