@@ -1,6 +1,15 @@
 import random
+import uuid
+
 from aiogram import Bot, Dispatcher, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import (
+    Message,
+    CallbackQuery,
+    InlineQuery,
+    InlineQueryResultArticle,
+    InputTextMessageContent
+)
+
 from aiogram.filters import CommandStart
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.enums import ParseMode
@@ -48,6 +57,28 @@ async def start(message: Message):
     await message.answer(
         "🎉 اهلًا بك في بوت الروليت",
         reply_markup=main_menu()
+    )
+
+
+# نظام المشاركة الحقيقي
+@dp.inline_query()
+async def inline_query(query: InlineQuery):
+
+    item = InlineQueryResultArticle(
+        id=str(uuid.uuid4()),
+        title="🎲 مشاركة روليت",
+        input_message_content=InputTextMessageContent(
+            message_text="""
+🎲 روليت جديد
+
+اضغط دخول للمشاركة 🎉
+            """
+        )
+    )
+
+    await query.answer(
+        results=[item],
+        cache_time=1
     )
 
 
@@ -104,7 +135,7 @@ async def back(call: CallbackQuery):
     )
 
 
-# نشر روليت عادي
+# روليت عادي
 @dp.callback_query(F.data == "start_normal")
 async def start_normal(call: CallbackQuery):
 
@@ -113,7 +144,7 @@ async def start_normal(call: CallbackQuery):
     # زر مشاركة حقيقي
     kb.button(
         text="🎉 مشاركة",
-        switch_inline_query="تعال شارك بالروليت 🎲"
+        switch_inline_query="شارك الروليت 🎲"
     )
 
     kb.button(text="🎯 دخول", callback_data="join_normal")
@@ -175,16 +206,15 @@ async def pick_normal(call: CallbackQuery):
     )
 
 
-# نشر روليت أحكام
+# روليت أحكام
 @dp.callback_query(F.data == "start_rules")
 async def start_rules(call: CallbackQuery):
 
     kb = InlineKeyboardBuilder()
 
-    # زر مشاركة حقيقي
     kb.button(
         text="🎉 مشاركة",
-        switch_inline_query="تعال شارك بروليت الأحكام ⚖️"
+        switch_inline_query="شارك روليت الأحكام ⚖️"
     )
 
     kb.button(text="🎯 دخول", callback_data="join_rules")
