@@ -1,295 +1,248 @@
-import random
-import uuid
-
-from aiogram import Bot, Dispatcher, F
-from aiogram.types import (
-    Message,
-    CallbackQuery,
-    InlineQuery,
-    InlineQueryResultArticle,
-    InputTextMessageContent
+from telegram import (
+    Update,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup
 )
 
-from aiogram.filters import CommandStart
-from aiogram.utils.keyboard import InlineKeyboardBuilder
-from aiogram.enums import ParseMode
-from aiogram.client.default import DefaultBotProperties
-
-# حط توكن البوت هنا
-BOT_TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
-
-bot = Bot(
-    token=BOT_TOKEN,
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    MessageHandler,
+    CallbackQueryHandler,
+    ContextTypes,
+    filters
 )
 
-dp = Dispatcher()
+TOKEN = "8735268386:AAGzFCX4yKoTjdgSjbFId1xP4Rhc-BGJ9oo"
 
-participants = {}
+roulette_data = {}
 
-rules_list = [
-    "غني أغنية 🎤",
-    "غير صورتك يوم كامل 😂",
-    "ابعث رسالة صوتية 🎙",
-    "قل نكتة 🤣",
-    "سوي تحدي 😈"
-]
+# /start
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
+    text = """
+🎡 أهلاً بك في بوت الروليت
 
-def main_menu():
-    kb = InlineKeyboardBuilder()
+بوت روليت مخصص للألعاب الترفيهية
+والسحوبات داخل القنوات 🎉
 
-    # أزرار كبار
-    kb.button(text="🎲 روليت عادي", callback_data="normal")
-    kb.button(text="⚖️ روليت أحكام", callback_data="rules")
-    kb.button(text="⭐ روليت مميز", callback_data="premium")
-    kb.button(text="📢 NQJNQ", url="https://t.me/NQJNQ")
+✨ يدعم:
+• روليت عادي
+• روليت الأحكام
+• روليت مميز
 
-    # كل زر بسطر
-    kb.adjust(1)
+نتمنى يعجبكم البوت ❤️
+"""
 
-    return kb.as_markup()
+    keyboard = [
+        [InlineKeyboardButton("🎲 روليت عادي", callback_data="normal")],
+        [InlineKeyboardButton("⚖️ روليت الأحكام", callback_data="rules")],
+        [InlineKeyboardButton("⭐ روليت مميز", callback_data="vip")]
+    ]
 
-
-@dp.message(CommandStart())
-async def start(message: Message):
-
-    await message.answer(
-        "🎉 اهلًا بك في بوت الروليت",
-        reply_markup=main_menu()
+    await update.message.reply_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
+# الأزرار
+async def buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-# نظام المشاركة الحقيقي
-@dp.inline_query()
-async def inline_query(query: InlineQuery):
+    query = update.callback_query
+    await query.answer()
 
-    item = InlineQueryResultArticle(
-        id=str(uuid.uuid4()),
-        title="🎲 مشاركة روليت",
-        input_message_content=InputTextMessageContent(
-            message_text="""
-🎲 روليت جديد
+    data = query.data
 
-اضغط دخول للمشاركة 🎉
-            """
-        )
-    )
+    # روليت عادي
+    if data == "normal":
 
-    await query.answer(
-        results=[item],
-        cache_time=1
-    )
+        context.user_data.clear()
+        context.user_data["type"] = "normal"
 
-
-# روليت عادي
-@dp.callback_query(F.data == "normal")
-async def normal(call: CallbackQuery):
-
-    kb = InlineKeyboardBuilder()
-
-    kb.button(text="✅ بدء", callback_data="start_normal")
-    kb.button(text="🔙 رجوع", callback_data="back")
-
-    kb.adjust(1)
-
-    await call.message.edit_text(
-        "🎲 روليت عادي",
-        reply_markup=kb.as_markup()
-    )
-
-
-# روليت أحكام
-@dp.callback_query(F.data == "rules")
-async def rules(call: CallbackQuery):
-
-    kb = InlineKeyboardBuilder()
-
-    kb.button(text="✅ بدء", callback_data="start_rules")
-    kb.button(text="🔙 رجوع", callback_data="back")
-
-    kb.adjust(1)
-
-    await call.message.edit_text(
-        "⚖️ روليت أحكام",
-        reply_markup=kb.as_markup()
-    )
-
-
-# روليت مميز
-@dp.callback_query(F.data == "premium")
-async def premium(call: CallbackQuery):
-
-    await call.message.edit_text(
-        "⭐ روليت مميز\n\nقيد التطوير"
-    )
-
-
-# رجوع
-@dp.callback_query(F.data == "back")
-async def back(call: CallbackQuery):
-
-    await call.message.edit_text(
-        "🎉 القائمة الرئيسية",
-        reply_markup=main_menu()
-    )
-
-
-# روليت عادي
-@dp.callback_query(F.data == "start_normal")
-async def start_normal(call: CallbackQuery):
-
-    kb = InlineKeyboardBuilder()
-
-    # زر مشاركة حقيقي
-    kb.button(
-        text="🎉 مشاركة",
-        switch_inline_query="شارك الروليت 🎲"
-    )
-
-    kb.button(text="🎯 دخول", callback_data="join_normal")
-    kb.button(text="🏆 اختيار فائز", callback_data="pick_normal")
-
-    kb.adjust(1)
-
-    msg = await call.message.answer(
-        """
-🎲 روليت عادي
-
-👥 المشاركين: 0
-
-اضغط دخول للمشاركة
-        """,
-        reply_markup=kb.as_markup()
-    )
-
-    participants[msg.message_id] = []
-
-
-# دخول روليت عادي
-@dp.callback_query(F.data == "join_normal")
-async def join_normal(call: CallbackQuery):
-
-    users = participants.get(call.message.message_id, [])
-
-    if call.from_user.id in users:
-        return await call.answer(
-            "أنت مشارك مسبقًا",
-            show_alert=True
+        await query.message.reply_text(
+            "📌 ارسل اسم الروليت:"
         )
 
-    users.append(call.from_user.id)
+    # روليت الأحكام
+    elif data == "rules":
 
-    participants[call.message.message_id] = users
+        context.user_data.clear()
+        context.user_data["type"] = "rules"
 
-    await call.answer("تم دخولك 🎉")
-
-
-# اختيار فائز
-@dp.callback_query(F.data == "pick_normal")
-async def pick_normal(call: CallbackQuery):
-
-    users = participants.get(call.message.message_id, [])
-
-    if not users:
-        return await call.answer(
-            "لا يوجد مشاركين",
-            show_alert=True
+        await query.message.reply_text(
+            "⚖️ ارسل اسم روليت الأحكام:"
         )
 
-    winner = random.choice(users)
+    # روليت مميز
+    elif data == "vip":
 
-    user = await bot.get_chat(winner)
+        context.user_data.clear()
+        context.user_data["type"] = "vip"
 
-    await call.message.answer(
-        f"🏆 الفائز هو @{user.username}"
-    )
-
-
-# روليت أحكام
-@dp.callback_query(F.data == "start_rules")
-async def start_rules(call: CallbackQuery):
-
-    kb = InlineKeyboardBuilder()
-
-    kb.button(
-        text="🎉 مشاركة",
-        switch_inline_query="شارك روليت الأحكام ⚖️"
-    )
-
-    kb.button(text="🎯 دخول", callback_data="join_rules")
-    kb.button(text="⚖️ اختيار", callback_data="pick_rules")
-
-    kb.adjust(1)
-
-    msg = await call.message.answer(
-        """
-⚖️ روليت أحكام
-
-👥 المشاركين: 0
-
-اضغط دخول للمشاركة
-        """,
-        reply_markup=kb.as_markup()
-    )
-
-    participants[msg.message_id] = []
-
-
-# دخول روليت أحكام
-@dp.callback_query(F.data == "join_rules")
-async def join_rules(call: CallbackQuery):
-
-    users = participants.get(call.message.message_id, [])
-
-    if call.from_user.id in users:
-        return await call.answer(
-            "أنت مشارك مسبقًا",
-            show_alert=True
+        await query.message.reply_text(
+            "⭐ ارسل عنوان الروليت المميز:"
         )
 
-    users.append(call.from_user.id)
+    # مشاركة
+    elif data.startswith("join_"):
 
-    participants[call.message.message_id] = users
+        rid = data.split("_")[1]
 
-    await call.answer("تم دخولك 🎉")
+        if rid not in roulette_data:
+            return
 
+        user = query.from_user.first_name
 
-# اختيار حكم
-@dp.callback_query(F.data == "pick_rules")
-async def pick_rules(call: CallbackQuery):
+        if user not in roulette_data[rid]["players"]:
+            roulette_data[rid]["players"].append(user)
 
-    users = participants.get(call.message.message_id, [])
+        players = roulette_data[rid]["players"]
+        max_players = roulette_data[rid]["max"]
 
-    if not users:
-        return await call.answer(
-            "لا يوجد مشاركين",
-            show_alert=True
+        keyboard = [
+            [InlineKeyboardButton(
+                f"🎉 مشاركة ({len(players)})",
+                callback_data=f"join_{rid}"
+            )],
+
+            [InlineKeyboardButton(
+                "🎡 تدوير العجلة",
+                callback_data=f"spin_{rid}"
+            )],
+
+            [InlineKeyboardButton(
+                "📢 قناتنا",
+                url="https://t.me/NQJNQ"
+            )]
+        ]
+
+        # روليت الأحكام
+        if roulette_data[rid]["type"] == "rules":
+
+            text = f"""
+⚖️ {roulette_data[rid]['title']}
+
+👥 المشاركين: {len(players)} من أصل {max_players}
+
+🎭 الحكم سيتم اختياره عشوائياً
+"""
+
+        # روليت عادي
+        else:
+
+            text = f"""
+🎲 {roulette_data[rid]['title']}
+
+👥 المشاركين: {len(players)} من أصل {max_players}
+
+🏆 لم يتم اختيار الفائز بعد
+"""
+
+        await query.edit_message_text(
+            text=text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
         )
 
-    winner = random.choice(users)
+# استقبال الرسائل
+async def messages(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user = await bot.get_chat(winner)
+    text = update.message.text
 
-    rule = random.choice(rules_list)
+    # اسم الروليت
+    if "title" not in context.user_data:
 
-    await call.message.answer(
-        f"""
-⚖️ روليت أحكام
+        context.user_data["title"] = text
 
-🏆 الشخص المختار:
-@{user.username}
+        await update.message.reply_text(
+            "👥 ارسل عدد المشاركين:"
+        )
 
-📜 الحكم:
-{rule}
-        """
-    )
+        return
 
+    # عدد المشاركين
+    if "max" not in context.user_data:
 
-async def main():
-    await dp.start_polling(bot)
+        context.user_data["max"] = int(text)
 
+        await update.message.reply_text(
+            "📢 ارسل يوزر القناة بدون @"
+        )
 
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+        return
+
+    # يوزر القناة
+    if "channel" not in context.user_data:
+
+        context.user_data["channel"] = text.replace("@", "")
+
+        rid = str(len(roulette_data) + 1)
+
+        roulette_data[rid] = {
+            "title": context.user_data["title"],
+            "max": context.user_data["max"],
+            "channel": context.user_data["channel"],
+            "players": [],
+            "type": context.user_data["type"]
+        }
+
+        keyboard = [
+            [InlineKeyboardButton(
+                "🎉 مشاركة (0)",
+                callback_data=f"join_{rid}"
+            )],
+
+            [InlineKeyboardButton(
+                "🎡 تدوير العجلة",
+                callback_data=f"spin_{rid}"
+            )],
+
+            [InlineKeyboardButton(
+                "📢 قناتنا",
+                url="https://t.me/NQJNQ"
+            )]
+        ]
+
+        # روليت الأحكام
+        if context.user_data["type"] == "rules":
+
+            message_text = f"""
+⚖️ {context.user_data['title']}
+
+👥 المشاركين: 0 من أصل {context.user_data['max']}
+
+🎭 الحكم سيتم اختياره عشوائياً
+"""
+
+        # روليت عادي + المميز
+        else:
+
+            message_text = f"""
+🎲 {context.user_data['title']}
+
+👥 المشاركين: 0 من أصل {context.user_data['max']}
+
+🏆 لم يتم اختيار الفائز بعد
+"""
+
+        await context.bot.send_message(
+            chat_id=f"@{context.user_data['channel']}",
+            text=message_text,
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+
+        await update.message.reply_text(
+            "✅ تم نشر الروليت بالقناة"
+        )
+
+        context.user_data.clear()
+
+# تشغيل البوت
+app = ApplicationBuilder().token(TOKEN).build()
+
+app.add_handler(CommandHandler("start", start))
+app.add_handler(CallbackQueryHandler(buttons))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, messages))
+
+print("البوت شغال...")
+
+app.run_polling()
